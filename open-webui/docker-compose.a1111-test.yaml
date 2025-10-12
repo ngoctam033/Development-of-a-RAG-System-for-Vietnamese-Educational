@@ -5,7 +5,7 @@ services:
     # Not built for ARM64
     platform: linux/amd64
     image: ghcr.io/neggles/sd-webui-docker:latest
-    restart: unless-stopped
+    restart: no
     environment:
       CLI_ARGS: "--api --use-cpu all --precision full --no-half --skip-torch-cuda-test --ckpt /empty.pt --do-not-download-clip --disable-nan-check --disable-opt-split-attention"
       PYTHONUNBUFFERED: "1"
