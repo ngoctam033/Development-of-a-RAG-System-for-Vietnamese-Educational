@@ -1,0 +1,11 @@
+# docker-compose.yml (file chính)
+include:
+  - ./airflow-service/docker-compose.yaml
+  - ./open-webui/docker-compose.yaml
+  - ./spark-service/docker-compose.yaml
+  - ./minio-service/docker-compose.yaml
+# Cấu hình bổ sung hoặc ghi đè (nếu cần)
+# services:
+#   service1:
+#     environment:
+#       - ADDITIONAL_VAR=value
