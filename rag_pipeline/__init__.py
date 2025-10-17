@@ -8,8 +8,6 @@ from .retrieval import search
 from .generation import answer_generator
 
 # Expose commonly used functions directly
-from .extraction.pdf_extractor import get_all_files_in_folder
-from .processing.chunking import chunk_text
-from .vectorization.embedder import embed_documents
-from .retrieval.search import search_documents
-from .generation.answer_generator import generate_answer
+from .extraction.pdf_extractor import get_all_files_in_folder, extract_pdf_pipeline
+from .processing.chunking import chunk_markdown_file, analyze_chunk_statistics
+from .vectorization.embedder import vectorize_chunks_pipeline, load_vectorized_data
