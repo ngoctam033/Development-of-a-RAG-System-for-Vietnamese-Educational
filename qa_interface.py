@@ -14,7 +14,7 @@ def run_qa_interface():
     
     # Initialize components
     vector_store = VectorStore()
-    generator = GeminiGenerator(api_key="AIzaSyAErdM6qmuV4YVJqies3h571G4j2gTjS-Q")
+    generator = GeminiGenerator(api_key="")
     
     # Create RAG pipeline
     pipeline = RAGPipeline(vector_store, generator)
