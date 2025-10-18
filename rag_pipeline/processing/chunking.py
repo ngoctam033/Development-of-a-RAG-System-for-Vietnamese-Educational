@@ -13,7 +13,7 @@ import json
 import os
 from typing import List, Dict, Tuple, Optional
 
-from utils.logger import default_logger as logger
+from utils.logger import logger
 
 
 def read_markdown_file(file_path: str) -> str:

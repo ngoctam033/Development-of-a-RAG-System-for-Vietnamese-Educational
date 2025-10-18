@@ -4,7 +4,7 @@ import os
 from typing import List, Dict
 
 from config.pipeline_config import RAW_DATA_FOLDER_PATH
-from utils.logger import default_logger as logger
+from utils.logger import logger
 
 #  Tạo hàm để lấy tất cả các file trong thư mục RAW_DATA_FOLDER_PATH
 def get_all_files_in_folder(

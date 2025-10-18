@@ -16,7 +16,7 @@ import numpy as np
 from typing import List, Dict, Optional, Tuple, Any
 from sentence_transformers import SentenceTransformer
 
-from utils.logger import default_logger as logger
+from utils.logger import logger as logger
 
 
 def load_embedding_model(model_name: str = "sentence-transformers/all-MiniLM-L6-v2") -> SentenceTransformer:
