@@ -10,6 +10,8 @@ from rag_pipeline.main import RAGPipeline
 
 from utils.logger import logger
 
+from config.llm_api_config import GEMINI_API_KEY
+
 def run_qa_interface():
     """
     Simple command-line interface for Q&A system
@@ -35,6 +37,19 @@ def run_qa_interface():
         if question.lower() == 'exit':
             logger.info("👋 Cảm ơn đã sử dụng hệ thống!")
             break
+            
+        # Skip empty questions
+        if not question.strip():
+            logger.warning("❗ Vui lòng nhập câu hỏi!")
+            continue
+        
+        # Clean question
+        original_question = question
+        question = clean_question(question)
+        
+        # Log cleaned question if different
+        if question != original_question:
+            logger.info(f"🔄 Câu hỏi sau khi làm sạch: {question}")
         
         # Get answer from pipeline
         result = pipeline.answer_question(question, top_k=3)
