@@ -45,7 +45,6 @@ def run_qa_interface():
         
         # Clean question
         original_question = question
-        question = clean_question(question)
         
         # Log cleaned question if different
         if question != original_question:
