@@ -1,0 +1,8 @@
+airflow-service/config/airflow.cfg
+airflow-service/logs/
+./__pycache__/
+*.pyc
+*.pyo
+# Python venv
+.venv/
+venv/

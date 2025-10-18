@@ -1,0 +1,165 @@
+2025-10-17 12:50:16,820 - rag_pipeline - INFO - Ph�n chia markdown th�nh chapters...
+2025-10-17 12:50:16,837 - rag_pipeline - INFO -   total_chunks: 38
+2025-10-17 12:50:16,837 - rag_pipeline - INFO -   total_chapters: 7
+2025-10-17 12:50:16,837 - rag_pipeline - INFO -   avg_content_length: 2572.0526315789475
+2025-10-17 12:50:16,837 - rag_pipeline - INFO -   min_content_length: 53
+2025-10-17 12:50:16,837 - rag_pipeline - INFO -   max_content_length: 23501
+2025-10-17 12:50:16,838 - rag_pipeline - INFO -   total_characters: 97738
+2025-10-17 12:50:16,842 - rag_pipeline - INFO - Loading embedding model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 12:50:21,171 - rag_pipeline - INFO - Successfully loaded model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 12:50:21,172 - rag_pipeline - INFO - Model max sequence length: 256
+2025-10-17 12:50:21,172 - rag_pipeline - INFO - Extracting texts from 38 chunks for embedding
+2025-10-17 12:50:21,183 - rag_pipeline - INFO - Extracted 38 texts for embedding
+2025-10-17 12:50:21,184 - rag_pipeline - INFO - Generating embeddings for 38 texts (batch_size=32)
+2025-10-17 12:50:23,666 - rag_pipeline - INFO - Successfully generated embeddings: shape (38, 384)
+2025-10-17 12:50:23,670 - rag_pipeline - INFO - Attaching embeddings to 38 chunks
+2025-10-17 12:50:23,671 - rag_pipeline - INFO - Successfully attached embeddings to all chunks
+2025-10-17 12:50:23,671 - rag_pipeline - INFO - Saving vectorized data to pickle: data/vector_store/vectorized_data.pkl
+2025-10-17 12:50:23,673 - rag_pipeline - INFO - Successfully saved vectorized data to data/vector_store/vectorized_data.pkl
+2025-10-17 12:50:23,675 - rag_pipeline - INFO - Saving vectorized metadata to JSON: data/vector_store/vectorized_metadata.json
+2025-10-17 12:50:23,678 - rag_pipeline - INFO - Successfully saved metadata to data/vector_store/vectorized_metadata.json
+2025-10-17 12:50:24,246 - rag_pipeline - INFO - ======================================================================
+2025-10-17 12:50:24,253 - rag_pipeline - INFO - ======================================================================
+2025-10-17 12:50:24,253 - rag_pipeline - INFO -    Model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 12:50:24,253 - rag_pipeline - INFO -    Total chunks: 38
+2025-10-17 12:50:24,254 - rag_pipeline - INFO -    Vector dimensions: 384
+2025-10-17 12:50:24,254 - rag_pipeline - INFO -    Mean vector norm: 1.0000
+2025-10-17 12:50:24,254 - rag_pipeline - INFO - ======================================================================
+2025-10-17 12:50:24,256 - rag_pipeline - INFO -    Pickle (with embeddings): data/vector_store/vectorized_data.pkl
+2025-10-17 12:50:24,256 - rag_pipeline - INFO -    JSON (metadata only): data/vector_store/vectorized_metadata.json
+2025-10-17 12:50:24,256 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:03,343 - rag_pipeline - INFO - Ph�n chia markdown th�nh chapters...
+2025-10-17 13:12:03,368 - rag_pipeline - INFO -   total_chunks: 38
+2025-10-17 13:12:03,368 - rag_pipeline - INFO -   total_chapters: 7
+2025-10-17 13:12:03,368 - rag_pipeline - INFO -   avg_content_length: 2572.0526315789475
+2025-10-17 13:12:03,369 - rag_pipeline - INFO -   min_content_length: 53
+2025-10-17 13:12:03,369 - rag_pipeline - INFO -   max_content_length: 23501
+2025-10-17 13:12:03,369 - rag_pipeline - INFO -   total_characters: 97738
+2025-10-17 13:12:03,375 - rag_pipeline - INFO - Loading embedding model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:12:07,317 - rag_pipeline - INFO - Successfully loaded model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:12:07,317 - rag_pipeline - INFO - Model max sequence length: 256
+2025-10-17 13:12:07,317 - rag_pipeline - INFO - Extracting texts from 38 chunks for embedding
+2025-10-17 13:12:07,328 - rag_pipeline - INFO - Extracted 38 texts for embedding
+2025-10-17 13:12:07,329 - rag_pipeline - INFO - Generating embeddings for 38 texts (batch_size=32)
+2025-10-17 13:12:08,845 - rag_pipeline - INFO - Successfully generated embeddings: shape (38, 384)
+2025-10-17 13:12:08,848 - rag_pipeline - INFO - Attaching embeddings to 38 chunks
+2025-10-17 13:12:08,848 - rag_pipeline - INFO - Successfully attached embeddings to all chunks
+2025-10-17 13:12:08,848 - rag_pipeline - INFO - Saving vectorized data to pickle: data/vector_store/vectorized_data.pkl
+2025-10-17 13:12:08,848 - rag_pipeline - INFO - Successfully saved vectorized data to data/vector_store/vectorized_data.pkl
+2025-10-17 13:12:08,848 - rag_pipeline - INFO - Saving vectorized metadata to JSON: data/vector_store/vectorized_metadata.json
+2025-10-17 13:12:08,855 - rag_pipeline - INFO - Successfully saved metadata to data/vector_store/vectorized_metadata.json
+2025-10-17 13:12:08,856 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:08,858 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:08,858 - rag_pipeline - INFO -    Model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:12:08,858 - rag_pipeline - INFO -    Total chunks: 38
+2025-10-17 13:12:08,858 - rag_pipeline - INFO -    Vector dimensions: 384
+2025-10-17 13:12:08,860 - rag_pipeline - INFO -    Mean vector norm: 1.0000
+2025-10-17 13:12:08,860 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:08,861 - rag_pipeline - INFO -    Pickle (with embeddings): data/vector_store/vectorized_data.pkl
+2025-10-17 13:12:08,861 - rag_pipeline - INFO -    JSON (metadata only): data/vector_store/vectorized_metadata.json
+2025-10-17 13:12:08,861 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:45,954 - rag_pipeline - INFO - Ph�n chia markdown th�nh chapters...
+2025-10-17 13:12:45,976 - rag_pipeline - INFO -   total_chunks: 38
+2025-10-17 13:12:45,976 - rag_pipeline - INFO -   total_chapters: 7
+2025-10-17 13:12:45,976 - rag_pipeline - INFO -   avg_content_length: 2572.0526315789475
+2025-10-17 13:12:45,976 - rag_pipeline - INFO -   min_content_length: 53
+2025-10-17 13:12:45,976 - rag_pipeline - INFO -   max_content_length: 23501
+2025-10-17 13:12:45,976 - rag_pipeline - INFO -   total_characters: 97738
+2025-10-17 13:12:45,986 - rag_pipeline - INFO - Loading embedding model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:12:49,926 - rag_pipeline - INFO - Successfully loaded model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:12:49,926 - rag_pipeline - INFO - Model max sequence length: 256
+2025-10-17 13:12:49,926 - rag_pipeline - INFO - Extracting texts from 38 chunks for embedding
+2025-10-17 13:12:49,943 - rag_pipeline - INFO - Extracted 38 texts for embedding
+2025-10-17 13:12:49,943 - rag_pipeline - INFO - Generating embeddings for 38 texts (batch_size=32)
+2025-10-17 13:12:51,343 - rag_pipeline - INFO - Successfully generated embeddings: shape (38, 384)
+2025-10-17 13:12:51,343 - rag_pipeline - INFO - Attaching embeddings to 38 chunks
+2025-10-17 13:12:51,344 - rag_pipeline - INFO - Successfully attached embeddings to all chunks
+2025-10-17 13:12:51,344 - rag_pipeline - INFO - Saving vectorized data to pickle: data/vector_store/vectorized_data.pkl
+2025-10-17 13:12:51,346 - rag_pipeline - INFO - Successfully saved vectorized data to data/vector_store/vectorized_data.pkl
+2025-10-17 13:12:51,346 - rag_pipeline - INFO - Saving vectorized metadata to JSON: data/vector_store/vectorized_metadata.json
+2025-10-17 13:12:51,348 - rag_pipeline - INFO - Successfully saved metadata to data/vector_store/vectorized_metadata.json
+2025-10-17 13:12:51,348 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:51,352 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:51,352 - rag_pipeline - INFO -    Model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:12:51,352 - rag_pipeline - INFO -    Total chunks: 38
+2025-10-17 13:12:51,352 - rag_pipeline - INFO -    Vector dimensions: 384
+2025-10-17 13:12:51,352 - rag_pipeline - INFO -    Mean vector norm: 1.0000
+2025-10-17 13:12:51,353 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:12:51,354 - rag_pipeline - INFO -    Pickle (with embeddings): data/vector_store/vectorized_data.pkl
+2025-10-17 13:12:51,355 - rag_pipeline - INFO -    JSON (metadata only): data/vector_store/vectorized_metadata.json
+2025-10-17 13:12:51,355 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:46:42,981 - rag_pipeline - INFO - Ph�n chia markdown th�nh chapters...
+2025-10-17 13:46:43,001 - rag_pipeline - INFO -   total_chunks: 38
+2025-10-17 13:46:43,002 - rag_pipeline - INFO -   total_chapters: 7
+2025-10-17 13:46:43,002 - rag_pipeline - INFO -   avg_content_length: 2572.0526315789475
+2025-10-17 13:46:43,002 - rag_pipeline - INFO -   min_content_length: 53
+2025-10-17 13:46:43,002 - rag_pipeline - INFO -   max_content_length: 23501
+2025-10-17 13:46:43,002 - rag_pipeline - INFO -   total_characters: 97738
+2025-10-17 13:46:43,008 - rag_pipeline - INFO - Loading embedding model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:46:47,604 - rag_pipeline - INFO - Successfully loaded model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:46:47,604 - rag_pipeline - INFO - Model max sequence length: 256
+2025-10-17 13:46:47,604 - rag_pipeline - INFO - Extracting texts from 38 chunks for embedding
+2025-10-17 13:46:47,615 - rag_pipeline - INFO - Extracted 38 texts for embedding
+2025-10-17 13:46:47,615 - rag_pipeline - INFO - Generating embeddings for 38 texts (batch_size=32)
+2025-10-17 13:46:49,281 - rag_pipeline - INFO - Successfully generated embeddings: shape (38, 384)
+2025-10-17 13:46:49,281 - rag_pipeline - INFO - Attaching embeddings to 38 chunks
+2025-10-17 13:46:49,291 - rag_pipeline - INFO - Successfully attached embeddings to all chunks
+2025-10-17 13:46:49,291 - rag_pipeline - INFO - Saving vectorized data to pickle: data/vector_store/vectorized_data.pkl
+2025-10-17 13:46:49,293 - rag_pipeline - INFO - Successfully saved vectorized data to data/vector_store/vectorized_data.pkl
+2025-10-17 13:46:49,293 - rag_pipeline - INFO - Saving vectorized metadata to JSON: data/vector_store/vectorized_metadata.json
+2025-10-17 13:46:49,297 - rag_pipeline - INFO - Successfully saved metadata to data/vector_store/vectorized_metadata.json
+2025-10-17 13:46:49,298 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:46:49,301 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:46:49,301 - rag_pipeline - INFO -    Model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 13:46:49,301 - rag_pipeline - INFO -    Total chunks: 38
+2025-10-17 13:46:49,301 - rag_pipeline - INFO -    Vector dimensions: 384
+2025-10-17 13:46:49,301 - rag_pipeline - INFO -    Mean vector norm: 1.0000
+2025-10-17 13:46:49,302 - rag_pipeline - INFO - ======================================================================
+2025-10-17 13:46:49,303 - rag_pipeline - INFO -    Pickle (with embeddings): data/vector_store/vectorized_data.pkl
+2025-10-17 13:46:49,303 - rag_pipeline - INFO -    JSON (metadata only): data/vector_store/vectorized_metadata.json
+2025-10-17 13:46:49,303 - rag_pipeline - INFO - ======================================================================
+2025-10-17 14:01:51,506 - rag_pipeline - INFO - Tìm thấy 1 file .pdf trong thư mục data/raw/
+2025-10-17 14:01:51,511 - rag_pipeline - INFO - Bắt đầu chunking pipeline
+2025-10-17 14:01:51,511 - rag_pipeline - INFO - Đang đọc file markdown: data/processed/Phu luc 3b_Mau CTDT thong thuong KM22.md
+2025-10-17 14:01:51,515 - rag_pipeline - INFO - Đã đọc thành công 102077 ký tự từ file
+2025-10-17 14:01:51,515 - rag_pipeline - INFO - Phân chia markdown thành chapters...
+2025-10-17 14:01:51,517 - rag_pipeline - INFO - Đã tìm thấy 7 chapters
+2025-10-17 14:01:51,518 - rag_pipeline - INFO - Bắt đầu xử lý tất cả chapters...
+2025-10-17 14:01:51,519 - rag_pipeline - INFO - Đã tạo tổng cộng 38 chunks từ 7 chapters
+2025-10-17 14:01:51,520 - rag_pipeline - INFO - Lưu 38 chunks vào file: data/processed/Phu luc 3b_Mau CTDT thong thuong KM22_chunks.json
+2025-10-17 14:01:51,523 - rag_pipeline - INFO - Đã lưu thành công chunks vào data/processed/Phu luc 3b_Mau CTDT thong thuong KM22_chunks.json
+2025-10-17 14:01:51,523 - rag_pipeline - INFO - Chunking pipeline hoàn tất: 38 chunks
+2025-10-17 14:01:51,526 - rag_pipeline - INFO - Thống kê chunks:
+2025-10-17 14:01:51,526 - rag_pipeline - INFO -   total_chunks: 38
+2025-10-17 14:01:51,526 - rag_pipeline - INFO -   total_chapters: 7
+2025-10-17 14:01:51,526 - rag_pipeline - INFO -   avg_content_length: 2572.0526315789475
+2025-10-17 14:01:51,526 - rag_pipeline - INFO -   min_content_length: 53
+2025-10-17 14:01:51,526 - rag_pipeline - INFO -   max_content_length: 23501
+2025-10-17 14:01:51,528 - rag_pipeline - INFO -   total_characters: 97738
+2025-10-17 14:04:25,852 - rag_pipeline - INFO - 🚀 Bắt đầu vectorization pipeline
+2025-10-17 14:04:25,920 - rag_pipeline - INFO - Loading embedding model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 14:04:31,298 - rag_pipeline - INFO - Successfully loaded model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 14:04:31,299 - rag_pipeline - INFO - Model max sequence length: 256
+2025-10-17 14:04:31,299 - rag_pipeline - INFO - Extracting texts from 38 chunks for embedding
+2025-10-17 14:04:31,317 - rag_pipeline - INFO - Extracted 38 texts for embedding
+2025-10-17 14:04:31,317 - rag_pipeline - INFO - Generating embeddings for 38 texts (batch_size=32)
+2025-10-17 14:04:33,281 - rag_pipeline - INFO - Successfully generated embeddings: shape (38, 384)
+2025-10-17 14:04:33,286 - rag_pipeline - INFO - Attaching embeddings to 38 chunks
+2025-10-17 14:04:33,286 - rag_pipeline - INFO - Successfully attached embeddings to all chunks
+2025-10-17 14:04:33,287 - rag_pipeline - INFO - Saving vectorized data to pickle: data/vector_store/vectorized_data.pkl
+2025-10-17 14:04:33,292 - rag_pipeline - INFO - Successfully saved vectorized data to data/vector_store/vectorized_data.pkl
+2025-10-17 14:04:33,293 - rag_pipeline - INFO - Saving vectorized metadata to JSON: data/vector_store/vectorized_metadata.json
+2025-10-17 14:04:33,297 - rag_pipeline - INFO - Successfully saved metadata to data/vector_store/vectorized_metadata.json
+2025-10-17 14:04:33,317 - rag_pipeline - INFO - ======================================================================
+2025-10-17 14:04:33,317 - rag_pipeline - INFO - ✅ VECTOR HÓA HOÀN TẤT
+2025-10-17 14:04:33,317 - rag_pipeline - INFO - ======================================================================
+2025-10-17 14:04:33,319 - rag_pipeline - INFO -    Model: sentence-transformers/all-MiniLM-L6-v2
+2025-10-17 14:04:33,319 - rag_pipeline - INFO -    Total chunks: 38
+2025-10-17 14:04:33,319 - rag_pipeline - INFO -    Vector dimensions: 384
+2025-10-17 14:04:33,320 - rag_pipeline - INFO -    Mean vector norm: 1.0000
+2025-10-17 14:04:33,320 - rag_pipeline - INFO - ======================================================================
+2025-10-17 14:04:33,320 - rag_pipeline - INFO - 📁 Files saved:
+2025-10-17 14:04:33,321 - rag_pipeline - INFO -    Pickle (with embeddings): data/vector_store/vectorized_data.pkl
+2025-10-17 14:04:33,323 - rag_pipeline - INFO -    JSON (metadata only): data/vector_store/vectorized_metadata.json
+2025-10-17 14:04:33,324 - rag_pipeline - INFO - ======================================================================
+2025-10-17 14:04:33,324 - rag_pipeline - INFO - ✅ Vectorization pipeline hoàn tất thành công
