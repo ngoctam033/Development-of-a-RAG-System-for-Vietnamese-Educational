@@ -3,3 +3,7 @@ airflow-service/logs/
 ./__pycache__/
 *.pyc
 *.pyo
+.venv/
+logs/
+data/processed/all_chunks_combined.json
+data/processed/Phu luc 3b_Mau CTDT thong thuong KM22_chunks.json
