@@ -9,6 +9,8 @@ from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 
+from utils.logger import logger
+
 class VectorStore:
     def __init__(self, vector_store_path: str = "data/vector_store/vectorized_data.pkl"):
         """
@@ -27,14 +29,14 @@ class VectorStore:
         
     def load_vector_store(self) -> None:
         """Load vectorized data from pickle file"""
-        print("\n📚 Đang tải dữ liệu vector từ file...")
+        logger.info("📚 Đang tải dữ liệu vector từ file...")
         
         with open(self.vector_store_path, "rb") as f:
             self.vectorized_data = pickle.load(f)
             
         self.embeddings = np.array([item["embedding"] for item in self.vectorized_data])
-        print(f"✅ Đã tải {len(self.vectorized_data)} documents với vector embeddings")
-        print(f"📊 Vector dimensions: {len(self.embeddings[0])}")
+        logger.info(f"✅ Đã tải {len(self.vectorized_data)} documents với vector embeddings")
+        logger.info(f"📊 Vector dimensions: {len(self.embeddings[0])}")
         
     def get_embedding_model(self) -> SentenceTransformer:
         """

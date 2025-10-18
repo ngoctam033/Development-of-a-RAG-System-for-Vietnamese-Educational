@@ -20,6 +20,8 @@ from config.pipeline_config import (
     VECTORIZATION_CONFIG
 )
 
+from utils.logger import logger
+
 def main() -> None:
     """
     Execute the complete RAG pipeline workflow.
@@ -35,10 +37,10 @@ def main() -> None:
     # Initialize output directories
     os.makedirs(PROCESSING_DATA_FOLDER_PATH, exist_ok=True)
     os.makedirs(VECTOR_STORE_PATH, exist_ok=True)
-    
-    print("🚀 RAG PIPELINE - COMPLETE WORKFLOW")
-    print("=" * 60)
-    
+
+    logger.info("🚀 RAG PIPELINE - COMPLETE WORKFLOW")
+    logger.info("=" * 60)
+
     # Initialize tracking variables
     all_chunks: List[Dict[str, Any]] = []  # Store all processed chunks
     processed_files: List[str] = []        # Track successfully processed files
@@ -48,15 +50,15 @@ def main() -> None:
     files = pdf_extractor.get_all_files_in_folder()
     
     if not files:
-        print("❌ Không tìm thấy file PDF nào để xử lý")
+        logger.warning("❌ Không tìm thấy file PDF nào để xử lý")
         return
-    
-    print(f"\n📄 BƯỚC 1: PROCESSING {len(files)} PDF FILES")
-    print("-" * 40)
-    
+
+    logger.info(f"\n📄 BƯỚC 1: PROCESSING {len(files)} PDF FILES")
+    logger.info("-" * 40)
+
     for file in files:
-        print(f"Processing file: {file['name']}")
-        
+        logger.info(f"Processing file: {file['name']}")
+
         # Setup output paths for both markdown and chunks
         output_md_filename = f"{file['base_name']}.md"
         output_path = os.path.join(PROCESSING_DATA_FOLDER_PATH, output_md_filename)
@@ -68,19 +70,19 @@ def main() -> None:
         success = True  # Demo mode: assume extraction success
         
         if not success:
-            print(f"❌ Failed to extract: {file['name']}")
+            logger.error(f"❌ Failed to extract: {file['name']}")
             continue
 
-        print(f"✅ Successfully extracted: {file['name']} -> {output_md_filename}")
-        
+        logger.info(f"✅ Successfully extracted: {file['name']} -> {output_md_filename}")
+
         # Process chunks if markdown file exists
         if not os.path.exists(output_path):
-            print(f"❌ File markdown không tồn tại: {output_path}")
+            logger.error(f"❌ File markdown không tồn tại: {output_path}")
             continue
             
         try:
             # Generate chunks from markdown
-            print(f"🔪 Chunking: {output_md_filename}")
+            logger.info(f"🔪 Chunking: {output_md_filename}")
             chunks = chunk_markdown_file(output_path, output_chunks_path)
             
             # Enrich chunk metadata
@@ -94,26 +96,26 @@ def main() -> None:
             # Track progress
             all_chunks.extend(chunks)
             processed_files.append(file['base_name'])
-            print(f"✅ Generated {len(chunks)} chunks")
-            
+            logger.info(f"✅ Generated {len(chunks)} chunks")
+
         except Exception as e:
-            print(f"❌ Lỗi chunking {file['name']}: {str(e)}")
-        
-        print("-" * 50)
-    
+            logger.error(f"❌ Lỗi chunking {file['name']}: {str(e)}")
+
+        logger.info("-" * 50)
+
     # Validate chunks before proceeding
     if not all_chunks:
-        print("❌ Không có chunks nào được tạo. Pipeline dừng lại.")
+        logger.error("❌ Không có chunks nào được tạo. Pipeline dừng lại.")
         return
     
     # Stage 1 Summary
-    print(f"\n📊 TỔNG KẾT BƯỚC 1:")
-    print(f"   Documents processed: {len(processed_files)}")
-    print(f"   Total chunks: {len(all_chunks)}")
-    print(f"   Files: {', '.join(processed_files)}")
-    
+    logger.info(f"\n📊 TỔNG KẾT BƯỚC 1:")
+    logger.info(f"   Documents processed: {len(processed_files)}")
+    logger.info(f"   Total chunks: {len(all_chunks)}")
+    logger.info(f"   Files: {', '.join(processed_files)}")
+
     # Analyze chunk statistics
-    print(f"\n📊 PHÂN TÍCH THỐNG KÊ CHUNKS:")
+    logger.info(f"\n📊 PHÂN TÍCH THỐNG KÊ CHUNKS:")
     stats = analyze_chunk_statistics(all_chunks)
     
     # Save combined chunks for backup and analysis
@@ -121,15 +123,16 @@ def main() -> None:
     try:
         with open(all_chunks_path, 'w', encoding='utf-8') as f:
             json.dump(all_chunks, f, ensure_ascii=False, indent=2)
-        print(f"✅ Saved all chunks to: {all_chunks_path}")
+        logger.info(f"✅ Saved all chunks to: {all_chunks_path}")
     except Exception as e:
-        print(f"⚠️ Warning: Could not save combined chunks: {str(e)}")
-    
+        logger.warning(f"⚠️ Warning: Could not save combined chunks: {str(e)}")
+        logger.debug(f"⚠️ Debug info: {e}")
+    logger.info("-" * 50)
     # Stage 2: Vectorization
     # ----------------------------------------------------
-    print(f"\n🧮 BƯỚC 2: VECTORIZATION")
-    print("-" * 40)
-    print(f"Vector hóa {len(all_chunks)} chunks...")
+    logger.info(f"\n🧮 BƯỚC 2: VECTORIZATION")
+    logger.info("-" * 40)
+    logger.info(f"Vector hóa {len(all_chunks)} chunks...")
     
     # Configure and run vectorization using config settings
     vectorization_result = vectorize_chunks_pipeline(
@@ -143,37 +146,37 @@ def main() -> None:
     
     # Process vectorization results
     if vectorization_result["success"]:
-        print(f"\n✅ VECTORIZATION THÀNH CÔNG!")
+        logger.info(f"\n✅ VECTORIZATION THÀNH CÔNG!")
         
         stats = vectorization_result["statistics"]
         files_saved = vectorization_result["files_saved"]
         
         # Display vectorization details
-        print(f"   Model: {vectorization_result['model_name']}")
-        print(f"   Vector dimensions: {stats.get('vector_dimensions')}")
-        print(f"   Total vectors: {stats.get('total_vectors')}")
-        print(f"   Files saved:")
+        logger.info(f"   Model: {vectorization_result['model_name']}")
+        logger.info(f"   Vector dimensions: {stats.get('vector_dimensions')}")
+        logger.info(f"   Total vectors: {stats.get('total_vectors')}")
+        logger.info(f"   Files saved:")
         if files_saved.get("pickle"):
-            print(f"      Pickle: {files_saved['pickle']}")  # Binary vector storage
+            logger.info(f"      Pickle: {files_saved['pickle']}")  # Binary vector storage
         if files_saved.get("json"):
-            print(f"      JSON: {files_saved['json']}")      # Metadata storage
+            logger.info(f"      JSON: {files_saved['json']}")      # Metadata storage
     else:
-        print(f"❌ VECTORIZATION THẤT BẠI: {vectorization_result.get('error', 'Unknown error')}")
+        logger.error(f"❌ VECTORIZATION THẤT BẠI: {vectorization_result.get('error', 'Unknown error')}")
     
     # Final Pipeline Summary
     # ----------------------------------------------------
-    print(f"\n" + "=" * 60)
-    print("🎉 RAG PIPELINE HOÀN TẤT")
-    print("=" * 60)
-    print(f"   📄 PDF files processed: {len(processed_files)}")
-    print(f"   🔪 Total chunks created: {len(all_chunks)}")
+    logger.info(f"\n" + "=" * 60)
+    logger.info("🎉 RAG PIPELINE HOÀN TẤT")
+    logger.info("=" * 60)
+    logger.info(f"   📄 PDF files processed: {len(processed_files)}")
+    logger.info(f"   🔪 Total chunks created: {len(all_chunks)}")
     if vectorization_result["success"]:
-        print(f"   🧮 Vectors generated: {vectorization_result['statistics'].get('total_vectors')}")
-        print(f"   📁 Data ready for retrieval at: {VECTOR_STORE_PATH}")
-        print(f"   🚀 Ready for Q&A system!")
+        logger.info(f"   🧮 Vectors generated: {vectorization_result['statistics'].get('total_vectors')}")
+        logger.info(f"   📁 Data ready for retrieval at: {VECTOR_STORE_PATH}")
+        logger.info(f"   🚀 Ready for Q&A system!")
     else:
-        print(f"   ❌ Vectorization failed - manual intervention needed")
-    print("=" * 60)
+        logger.error(f"   ❌ Vectorization failed - manual intervention needed")
+    logger.info("=" * 60)
 
 if __name__ == "__main__":
     main()

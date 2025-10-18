@@ -53,4 +53,4 @@ def setup_logger(logger_name='rag_pipeline', log_dir='logs', level=logging.INFO)
     return logger
 
 # Logger mặc định cho toàn bộ dự án
-default_logger = setup_logger()
+logger = setup_logger()
