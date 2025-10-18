@@ -3,6 +3,7 @@ Command line interface for the RAG system
 """
 
 import os
+import re
 from rag_pipeline.retrieval.vector_store import VectorStore
 from rag_pipeline.generation.llm import GeminiGenerator
 from rag_pipeline.main import RAGPipeline
