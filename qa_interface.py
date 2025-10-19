@@ -6,10 +6,14 @@ import os
 import re
 
 from rag_pipeline.retrieval.vector_store import load_vector_store
+import re
+from rag_pipeline.retrieval.vector_store import VectorStore
 from rag_pipeline.generation.llm import GeminiGenerator
 from rag_pipeline.main import answer_question
 
 from utils.logger import logger
+
+from config.llm_api_config import GEMINI_API_KEY
 
 def run_qa_interface():
     """
@@ -20,6 +24,11 @@ def run_qa_interface():
     # Initialize components
     vector_store = load_vector_store()
     generator = GeminiGenerator(api_key=GEMINI_API_KEY)
+    vector_store = VectorStore()
+    generator = GeminiGenerator(api_key=GEMINI_API_KEY)
+    
+    # Create RAG pipeline
+    pipeline = RAGPipeline(vector_store, generator)
 
     logger.info("\n" + "="*50)
     logger.info("🤖 HỆ THỐNG HỎI ĐÁP CHƯƠNG TRÌNH ĐÀO TẠO")
@@ -49,6 +58,21 @@ def run_qa_interface():
         
         # Get answer from pipeline (functional)
         result = answer_question(question, vector_store, generator, top_k=10)
+            
+        # Skip empty questions
+        if not question.strip():
+            logger.warning("❗ Vui lòng nhập câu hỏi!")
+            continue
+        
+        # Clean question
+        original_question = question
+        
+        # Log cleaned question if different
+        if question != original_question:
+            logger.info(f"🔄 Câu hỏi sau khi làm sạch: {question}")
+        
+        # Get answer from pipeline
+        result = pipeline.answer_question(question, top_k=3)
         
         # Display results
         logger.info("\n" + "-"*50)
