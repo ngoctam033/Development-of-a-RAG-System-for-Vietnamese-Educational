@@ -80,26 +80,21 @@ def main() -> None:
             logger.error(f"❌ File markdown không tồn tại: {output_path}")
             continue
             
-        try:
-            # Generate chunks from markdown
-            logger.info(f"🔪 Chunking: {output_md_filename}")
-            chunks = chunk_markdown_file(output_path, output_chunks_path)
-            
-            # Enrich chunk metadata
-            for chunk in chunks:
-                chunk['metadata'].update({
-                    'source_pdf': file['path'],
-                    'source_markdown': output_path,
-                    'document_name': file['base_name']
-                })
-            
-            # Track progress
-            all_chunks.extend(chunks)
-            processed_files.append(file['base_name'])
-            logger.info(f"✅ Generated {len(chunks)} chunks")
-
-        except Exception as e:
-            logger.error(f"❌ Lỗi chunking {file['name']}: {str(e)}")
+        # Generate chunks from markdown
+        logger.info(f"🔪 Chunking: {output_md_filename}")
+        chunks = chunk_markdown_file(output_path, output_chunks_path)
+        # Enrich chunk metadata
+        for chunk in chunks:
+            chunk['metadata'].update({
+                'source_pdf': file['path'],
+                'source_markdown': output_path,
+                'document_name': file['base_name']
+            })
+        
+        # Track progress
+        all_chunks.extend(chunks)
+        processed_files.append(file['base_name'])
+        logger.info(f"✅ Generated {len(chunks)} chunks")
 
         logger.info("-" * 50)
 
