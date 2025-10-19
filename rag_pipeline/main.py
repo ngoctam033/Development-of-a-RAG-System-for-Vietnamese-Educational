@@ -7,6 +7,13 @@ from typing import Dict, Any, List
 from rag_pipeline.retrieval.vector_store import search_similar
 from rag_pipeline.generation.llm import GeminiGenerator
 from utils.logger import logger
+from question_analysis.keyword_extractor import extract_keywords
+from config.pipeline_config import (
+    PROCESSING_DATA_FOLDER_PATH, 
+    VECTOR_STORE_PATH,
+    EMBEDDING_MODEL_NAME,
+    VECTORIZATION_CONFIG
+)
 
 def answer_question(question: str, vector_store: Dict[str, Any], generator: GeminiGenerator, top_k: int = 3) -> Dict[str, Any]:
     """
@@ -19,8 +26,9 @@ def answer_question(question: str, vector_store: Dict[str, Any], generator: Gemi
     Returns:
         dict: Result containing question, answer and sources
     """
+    header_path_filter = extract_keywords(question, VECTOR_STORE_PATH)
     # Retrieve relevant documents
-    related_docs = search_similar(question, vector_store, top_k=top_k)
+    related_docs = search_similar(question, vector_store, top_k=top_k, header_path_filter=header_path_filter)
 
     # Build context from retrieved documents
     context = ""

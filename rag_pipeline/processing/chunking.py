@@ -170,7 +170,6 @@ def save_chunks_to_json(chunks: List[Dict[str, any]], output_path: str) -> bool:
         logger.error(f"Lỗi khi lưu file {output_path}: {str(e)}")
         return False
 
-
 def chunk_markdown_file(input_file_path: str, output_file_path: str = "vectorization_data.json") -> List[Dict[str, any]]:
     """
     Pipeline hoàn chỉnh để chunk markdown file
@@ -208,7 +207,6 @@ def chunk_markdown_file(input_file_path: str, output_file_path: str = "vectoriza
 
     logger.info(f"Chunking pipeline hoàn tất: {len(processed_chunks)} chunks")
     return processed_chunks
-
 
 # Utility function để test và debug
 def analyze_chunk_statistics(chunks: List[Dict[str, any]]) -> Dict[str, any]:

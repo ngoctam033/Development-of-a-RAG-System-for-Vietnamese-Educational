@@ -2,3 +2,5 @@ pymupdf4llm
 numpy
 sentence_transformers
 google.generativeai
+keybert
+spacy
