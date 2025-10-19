@@ -13,7 +13,12 @@ from typing import Dict, List, Any
 from rag_pipeline import pdf_extractor
 from rag_pipeline.processing.chunking import chunk_markdown_file, analyze_chunk_statistics
 from rag_pipeline.vectorization.embedder import vectorize_chunks_pipeline
-from config.pipeline_config import PROCESSING_DATA_FOLDER_PATH, VECTOR_STORE_PATH
+from config.pipeline_config import (
+    PROCESSING_DATA_FOLDER_PATH, 
+    VECTOR_STORE_PATH,
+    EMBEDDING_MODEL_NAME,
+    VECTORIZATION_CONFIG
+)
 
 from utils.logger import logger
 
@@ -129,12 +134,12 @@ def main() -> None:
     logger.info("-" * 40)
     logger.info(f"Vector hóa {len(all_chunks)} chunks...")
     
-    # Configure and run vectorization
+    # Configure and run vectorization using config settings
     vectorization_result = vectorize_chunks_pipeline(
         chunks=all_chunks,
-        model_name="sentence-transformers/all-MiniLM-L6-v2",  # Default model, configurable
+        model_name=EMBEDDING_MODEL_NAME,
         output_dir=VECTOR_STORE_PATH,
-        batch_size=32,  # Adjust based on available memory
+        batch_size=VECTORIZATION_CONFIG["batch_size"],
         save_pickle=True,  # Save vectors in binary format
         save_json=True    # Save metadata in readable format
     )

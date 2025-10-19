@@ -45,7 +45,8 @@ class GeminiGenerator:
 
         ANSWER:
         """
-        
+        # in log prompt for debugging
+        print("Generated prompt for LLM:\n", prompt)
         # Generate response with specific configuration
         response = self.model.generate_content(
             prompt,

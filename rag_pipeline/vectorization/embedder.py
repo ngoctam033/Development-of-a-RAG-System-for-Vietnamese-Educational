@@ -156,6 +156,8 @@ def extract_texts_from_chunks(chunks: List[Dict[str, Any]]) -> List[str]:
         # Preprocess content
         processed_content = preprocess_content_for_embedding(chunk["content"])
         texts.append(processed_content)
+        # in ra bieens chunk dang xu ly
+        logger.info(f"Chunk {i} processed content:\n{chunk}\n")
     
     logger.info(f"Extracted {len(texts)} texts for embedding")
     return texts
