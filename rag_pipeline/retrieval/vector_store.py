@@ -1,81 +1,69 @@
 """
 Vector store module for similarity search functionality.
 Handles loading and searching through vectorized documents.
+Functional (non-OOP) version using FAISS.
 """
 
 import pickle
 import numpy as np
 from typing import List, Dict, Any
 from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
-
+import faiss
 from utils.logger import logger
+from config.pipeline_config import EMBEDDING_MODEL_NAME
 
-class VectorStore:
-    def __init__(self, vector_store_path: str = "data/vector_store/vectorized_data.pkl"):
-        """
-        Initialize the vector store with pre-computed embeddings
-        
-        Args:
-            vector_store_path (str): Path to the pickle file containing vectorized data
-        """
-        self.vector_store_path = vector_store_path
-        self.vectorized_data = None
-        self.embeddings = None
-        self.model = None
-        
-        # Load data on initialization
-        self.load_vector_store()
-        
-    def load_vector_store(self) -> None:
-        """Load vectorized data from pickle file"""
-        logger.info("📚 Đang tải dữ liệu vector từ file...")
-        
-        with open(self.vector_store_path, "rb") as f:
-            self.vectorized_data = pickle.load(f)
-            
-        self.embeddings = np.array([item["embedding"] for item in self.vectorized_data])
-        logger.info(f"✅ Đã tải {len(self.vectorized_data)} documents với vector embeddings")
-        logger.info(f"📊 Vector dimensions: {len(self.embeddings[0])}")
-        
-    def get_embedding_model(self) -> SentenceTransformer:
-        """
-        Load or return cached embedding model
-        
-        Returns:
-            SentenceTransformer: The embedding model
-        """
-        if self.model is None:
-            self.model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-        return self.model
-        
-    def search_similar(self, query_text: str, top_k: int = 3) -> List[Dict[str, Any]]:
-        """
-        Find documents similar to the query text
-        
-        Args:
-            query_text (str): Query text to find similar documents for
-            top_k (int): Number of results to return
-            
-        Returns:
-            list: List of similar documents with similarity scores
-        """
-        # Get query embedding
-        model = self.get_embedding_model()
-        query_embedding = model.encode(query_text)
-        
-        # Calculate similarities
-        similarities = cosine_similarity([query_embedding], self.embeddings)[0]
-        
-        # Get top results
-        top_indices = np.argsort(similarities)[-top_k:][::-1]
-        
-        results = []
-        for idx in top_indices:
-            results.append({
-                "content": self.vectorized_data[idx]["content"],
-                "metadata": self.vectorized_data[idx]["metadata"],
-                "similarity_score": float(similarities[idx])
-            })
-        
-        return results
+def load_vector_store(vector_store_path: str = "data/vector_store/vectorized_data.pkl") -> Dict[str, Any]:
+    """
+    Load vectorized data from pickle file and build FAISS index
+    Returns a dict with vectorized_data, embeddings, faiss_index, and embedding_model
+    """
+    logger.info("📚 Đang tải dữ liệu vector từ file...")
+    with open(vector_store_path, "rb") as f:
+        vectorized_data = pickle.load(f)
+    embeddings = np.array([item["embedding"] for item in vectorized_data]).astype('float32')
+    logger.info(f"✅ Đã tải {len(vectorized_data)} documents với vector embeddings")
+    logger.info(f"📊 Vector dimensions: {len(embeddings[0])}")
+
+    # Build FAISS index
+    dim = embeddings.shape[1]
+    faiss_index = faiss.IndexFlatIP(dim)
+    faiss.normalize_L2(embeddings)
+    faiss_index.add(embeddings)
+
+    # Load embedding model
+    embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+
+    return {
+        "vectorized_data": vectorized_data,
+        "embeddings": embeddings,
+        "faiss_index": faiss_index,
+        "embedding_model": embedding_model
+    }
+
+def search_similar(query_text: str, store: Dict[str, Any], top_k: int = 3) -> List[Dict[str, Any]]:
+    """
+    Find documents similar to the query text using FAISS
+    Args:
+        query_text (str): Query text to find similar documents for
+        store (dict): Dictionary returned by load_vector_store
+        top_k (int): Number of results to return
+    Returns:
+        list: List of similar documents with similarity scores
+    """
+    model = store["embedding_model"]
+    faiss_index = store["faiss_index"]
+    vectorized_data = store["vectorized_data"]
+
+    query_embedding = model.encode(query_text)
+    query_embedding = np.array(query_embedding, dtype='float32').reshape(1, -1)
+    faiss.normalize_L2(query_embedding)
+
+    scores, indices = faiss_index.search(query_embedding, top_k)
+    results = []
+    for i, idx in enumerate(indices[0]):
+        results.append({
+            "content": vectorized_data[idx]["content"],
+            "metadata": vectorized_data[idx]["metadata"],
+            "similarity_score": float(scores[0][i])
+        })
+    return results
