@@ -69,6 +69,24 @@ def split_markdown_into_chapters(markdown_content: str) -> List[str]:
     return chapters
 
 
+def split_markdown_into_alpha_sections(markdown_content: str) -> List[str]:
+    """
+    Phân chia markdown thành các sections bắt đầu bằng # A., # B., # C., ...
+    
+    Args:
+        markdown_content: Nội dung markdown đầy đủ
+        
+    Returns:
+        List các section strings
+    """
+    logger.info("Phân chia markdown thành các sections theo # A., # B., ...")
+    # Regex: # A. , # B. , ... (chữ cái in hoa, có dấu chấm)
+    sections = re.split(r'(?=# [A-Z]\.)', markdown_content)
+    sections = [section.strip() for section in sections if section.strip()]
+    logger.info(f"Đã tìm thấy {len(sections)} sections theo # A., # B., ...")
+    return sections
+
+
 def extract_header_info(line: str) -> Tuple[int, str]:
     """
     Trích xuất thông tin header từ một dòng
@@ -185,9 +203,14 @@ def process_content_buffer(content_buffer: List[str], chapter_idx: int, headers:
     if not content:
         return None
     
+    metadata = create_chunk_metadata(chapter_idx, headers)
+    # Chèn header_path vào đầu content
+    header_path = metadata.get("header_path", "")
+    if header_path:
+        content = f"{header_path}\n{content}"
     return {
         "content": content,
-        "metadata": create_chunk_metadata(chapter_idx, headers)
+        "metadata": metadata
     }
 
 
@@ -250,6 +273,8 @@ def process_all_chapters(chapters: List[str]) -> List[Dict[str, any]]:
     for chapter_idx, chapter in enumerate(chapters):
         chapter_chunks = process_single_chapter(chapter, chapter_idx)
         all_chunks.extend(chapter_chunks)
+        # in ra chapter dang xu ly
+        logger.info(f"Đang xử lý chapter {chapter_idx + 1} với {chapter_chunks} chunks")
     
     logger.info(f"Đã tạo tổng cộng {len(all_chunks)} chunks từ {len(chapters)} chapters")
     return all_chunks
