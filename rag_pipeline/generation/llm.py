@@ -28,23 +28,40 @@ class GeminiGenerator:
         Returns:
             str: Generated answer
         """
-        prompt = f"""Bạn là trợ lý trí tuệ nhân tạo chuyên về các chương trình đào tạo đại học. 
-        Hãy trả lời câu hỏi dưới đây dựa trên thông tin được cung cấp.
+        prompt = f"""Bạn là trợ lý trí tuệ nhân tạo chuyên về các chương trình đào tạo đại học.
+                    Hãy trả lời câu hỏi dưới đây dựa trên thông tin được cung cấp trong phần CONTEXT.
 
-        CONTEXT:
-        {context}
+                    CONTEXT:
+                    {context}
 
-        QUESTION: {question}
+                    QUESTION: {question}
 
-        INSTRUCTIONS:
-        - Trả lời bằng tiếng Việt
-        - Chỉ sử dụng thông tin trong context đã cung cấp
-        - Nếu không có thông tin đủ để trả lời, hãy nói "Tôi không tìm thấy thông tin đủ để trả lời câu hỏi này"
-        - Trả lời ngắn gọn, súc tích nhưng đầy đủ thông tin
-        - Nêu rõ nguồn trích dẫn khi cần thiết
+                    INSTRUCTIONS (bắt buộc):
+                    1) Trả lời NGẮN GỌN và RÕ RÀNG bằng tiếng Việt — phần "ANSWER" phải chứa câu trả lời trực tiếp, tối đa 3 câu.
+                    2) Ngay sau phần ANSWER, thêm một phần "GIẢI THÍCH CHI TIẾT" giải thích vì sao câu trả lời như vậy — trình bày chính xác các bước suy luận (step-by-step).
+                    3) Trong phần "GIẢI THÍCH CHI TIẾT", cho biết CĂN CỨ cụ thể từ CONTEXT cho mỗi bước, bằng cách:
+                    - Trích dẫn chính xác (tối đa 200 ký tự) đoạn văn hoặc dòng hỗ trợ (viết nguyên văn trong ngoặc kép).
+                    - Ghi chú vị trí/trích nguồn nếu có (ví dụ: header/section hoặc tên file).
+                    4) Nếu CONTEXT không đủ thông tin để trả lời hoặc để chứng minh một luận điểm, viết rõ: "Tôi không tìm thấy thông tin đủ để trả lời câu hỏi này" và chỉ ra phần thiếu.
+                    5) Không đưa thông tin ngoài CONTEXT. Nếu phải suy đoán, đánh dấu rõ là "suy đoán" và nêu cơ sở.
+                    6) Ở cuối, cung cấp mục "NGUỒN THAM KHẢO" liệt kê các header/section trích dẫn trong phần giải thích.
 
-        ANSWER:
-        """
+                    OUTPUT FORMAT (phải đúng định dạng):
+                    ANSWER:
+                    <ngắn gọn>
+
+                    GIẢI THÍCH CHI TIẾT:
+                    1) Bước 1: ... 
+                    - Căn cứ: "..." (vị trí)
+                    2) Bước 2: ...
+                    - Căn cứ: "..." (vị trí)
+                    ...
+
+                    NGUỒN THAM KHẢO:
+                    - Header/Section: dòng hoặc tiêu đề trích dẫn
+
+                    Bắt đầu trả lời bây giờ.
+                    """
         # in log prompt for debugging
         # print("Generated prompt for LLM:\n", prompt)
         # Generate response with specific configuration
