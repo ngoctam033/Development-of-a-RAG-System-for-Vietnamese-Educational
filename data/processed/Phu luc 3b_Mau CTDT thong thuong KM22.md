@@ -15,12 +15,12 @@ Chương trình đào tạo ngành Mạng máy tính và truyền thông dữ li
 Đào tạo người học ở trình độ cử nhân, có kiến thức chuyên môn toàn diện cả về lý thuyết lẫn thực tiễn, áp dụng các hiểu biết về nguyên lý, quy luật tự nhiên - xã hội, pháp luật, các kỹ năng thực hành cơ bản để điều quản lý, điều hành chuyên môn, có khả năng làm việc độc lập hoặc trong môi trường hoạt động nhóm một cách tự chủ, sáng tạo, có tinh thần khởi nghiệp nhằm khẳng định bản thân.
 #### 2.2. Mục tiêu cụ thể
 Sinh viên sau khi tốt nghiệp có các khả năng:
-- **PO1.** Có kiến thức cơ bản về toán học, khoa học tự nhiên, làm nền tảng cho việc tiếp thu các kiến thức chuyên môn trong lĩnh vực mạng truyền thông thông tin.
-- **PO2.** Có kiến thức cơ bản về khoa học chính trị và pháp luật, khoa học xã hội phù hợp với chuyên môn được đào tạo.
-- **PO3.** Có các kiến thức về cơ sở kỹ thuật và ngành chuyên sâu, có thể vận dụng trong việc quản lý, điều hành hoạt động liên quan đến lĩnh vực truyền thông thông tin trong thời đại công nghiệp 4.0.
-- **PO4.** Có các kỹ năng cá nhân cần thiết, phù hợp nhiều vị trí việc làm trong môi trường làm việc liên ngành, đa văn hóa.
-- **PO5.** Có đạo đức, ứng xử công bằng, có tinh thần trách nhiệm với xã hội.
-- **PO6.** Có năng lực tự chủ, tư duy và tác phong làm việc chủ động, ý thức tự nâng cao trình độ, học tập suốt đời.
+- PO1. Có kiến thức cơ bản về toán học, khoa học tự nhiên, làm nền tảng cho việc tiếp thu các kiến thức chuyên môn trong lĩnh vực mạng truyền thông thông tin.
+- PO2. Có kiến thức cơ bản về khoa học chính trị và pháp luật, khoa học xã hội phù hợp với chuyên môn được đào tạo.
+- PO3. Có các kiến thức về cơ sở kỹ thuật và ngành chuyên sâu, có thể vận dụng trong việc quản lý, điều hành hoạt động liên quan đến lĩnh vực truyền thông thông tin trong thời đại công nghiệp 4.0.
+- PO4. Có các kỹ năng cá nhân cần thiết, phù hợp nhiều vị trí việc làm trong môi trường làm việc liên ngành, đa văn hóa.
+- PO5. Có đạo đức, ứng xử công bằng, có tinh thần trách nhiệm với xã hội.
+- PO6. Có năng lực tự chủ, tư duy và tác phong làm việc chủ động, ý thức tự nâng cao trình độ, học tập suốt đời.
 #### 2.3. Định hướng nghề nghiệp của sinh viên tốt nghiệp
 Sinh viên tốt nghiệp ngành MMT&TTDL có thể đạt các vị trí phù hợp, hoạt động trong nền công nghiệp tri thức đang phát triển một cách mạnh mẽ, cả trong các cơ quan quản lý nhà nước lẫn các công ty đa quốc gia:
 - Thiết kế và xây dựng, vận hành, kiểm tu, bảo dưỡng, lắp đặt, xử lý ứng cứu thông tin trong các hệ thống mạng truyền thông gồm mạng lõi, mạng vô tuyến.
@@ -53,7 +53,7 @@ PI7.1: Thảo luận chủ động đóng góp xây dựng nội dung bài học
 PI7.2: Tham gia tích cực hoạt động nhóm theo hình thức được quy định (Trình độ năng lực: 2)
 Chương trình được thiết kế với các học phần đóng góp vào việc đạt được các chuẩn đầu ra này, với 12 học phần đóng góp vào PLO1, 24 học phần đóng góp vào PI2.1, 10 học phần đóng góp vào PI2.2 và các học phần khác đóng góp vào các PLO/PI còn lại tương ứng. Đặc biệt, có 39 học phần đóng góp vào PI7.1 và 35 học phần đóng góp vào PI7.2, thể hiện sự nhấn mạnh của chương trình vào việc hình thành năng lực tự học và làm việc nhóm cho sinh viên.
 ## III. CHƯƠNG TRÌNH CHI TIẾT
-**Định hướng chương trình khung của trường như sau:**
+Định hướng chương trình khung của trường như sau:
 ### 1. Kiến thức khoa học cơ bản: 29 tín chỉ
 - Bắt buộc: 29 tín chỉ
 - Tự chọn: 0 tín chỉ
@@ -80,7 +80,7 @@ Các môn bắt buộc:
 (Theo Quyết định 1201/QĐ-ĐHGTVT ngày 31/12/2019)
 Môn bắt buộc:
 - Tin học cơ bản (Mã: 124012) - 2 tín chỉ
-### **2. Kiến thức nền tảng kỹ thuật/Kinh tế cốt lõi: 63 tín chỉ**
+### 2. Kiến thức nền tảng kỹ thuật/Kinh tế cốt lõi: 63 tín chỉ
 - Bắt buộc: 54 tín chỉ
 - Tự chọn: 9 tín chỉ
 KIẾN THỨC CHUYÊN NGÀNH
@@ -119,7 +119,7 @@ Các môn tự chọn (TC1):
 - Thương mại điện tử (Mã: 124006) - 3 tín chỉ
 - Internet vạn vật (IoT) (Mã: 124011) - 2 tín chỉ
 - Môi trường và phát triển KT bền vững (Mã: 154008) - 2 tín chỉ
-### **3. Kiến thức chuyên ngành: 28 tín chỉ**
+### 3. Kiến thức chuyên ngành: 28 tín chỉ
 - Bắt buộc: 0 tín chỉ
 - Tự chọn: 28 tín chỉ
 Nhóm tín chỉ tự chọn TC2 (Sinh viên chọn 19 tín chỉ):
@@ -184,7 +184,7 @@ Nhóm tín chỉ tự chọn TC3 (Sinh viên chọn 9 tín chỉ nếu không l�
    - Mã học phần: 126001
    - Số tín chỉ: 6
    - Loại: Tự chọn TC3
-### **4. Danh sách chuyên ngành nhóm tự chọn TC3**
+### 4. Danh sách chuyên ngành nhóm tự chọn TC3
 Danh sách các học phần tự chọn TC3 bổ sung:
 1. Học phần: Trí tuệ nhân tạo
    - Mã học phần: 121033
@@ -210,7 +210,7 @@ Danh sách các học phần tự chọn TC3 bổ sung:
    - Mã học phần: 125014
    - Số tín chỉ: 3
    - Loại: Tự chọn TC3
-### **5. Kiến thức bổ trợ:** (không tính điểm tích lũy vào chương trình học)
+### 5. Kiến thức bổ trợ: (không tính điểm tích lũy vào chương trình học)
 #### Giáo dục thể chất (Theo Quyết định 490/ĐHGTVT-ĐT ngày 06/6/2016)
 Tổng số tín chỉ: 4 (Chứng chỉ)
 ##### Các học phần bắt buộc:
