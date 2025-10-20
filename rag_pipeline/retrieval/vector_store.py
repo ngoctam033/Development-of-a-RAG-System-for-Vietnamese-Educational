@@ -57,7 +57,7 @@ def search_similar(
     query_embedding = np.array(query_embedding, dtype='float32').reshape(1, -1)
     faiss.normalize_L2(query_embedding)
 
-    scores, indices = faiss_index.search(query_embedding, top_k * 5)  # Lấy nhiều hơn để filter
+    scores, indices = faiss_index.search(query_embedding, top_k)  # Lấy nhiều hơn để filter
     results = []
     for i, idx in enumerate(indices[0]):
         doc = vectorized_data[idx]

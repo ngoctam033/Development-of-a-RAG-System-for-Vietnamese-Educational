@@ -50,7 +50,7 @@ def run_qa_interface():
             logger.info(f"🔄 Câu hỏi sau khi làm sạch: {question}")
         
         # Get answer from pipeline (functional)
-        result = answer_question(question, vector_store, generator, top_k=10)
+        result = answer_question(question, vector_store, generator, top_k=100)
         
         # Display results
         logger.info("\n" + "-"*50)
