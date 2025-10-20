@@ -11,6 +11,7 @@ from sentence_transformers import SentenceTransformer
 import faiss
 from utils.logger import logger
 from config.pipeline_config import EMBEDDING_MODEL_NAME
+import os
 
 def load_vector_store(vector_store_path: str = "data/vector_store/vectorized_data.pkl") -> Dict[str, Any]:
     """
@@ -30,8 +31,16 @@ def load_vector_store(vector_store_path: str = "data/vector_store/vectorized_dat
     faiss.normalize_L2(embeddings)
     faiss_index.add(embeddings)
 
-    # Load embedding model
-    embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+    # Load embedding model from local or download if not available
+    model_path = "models/sentence-transformers"  # Thư mục lưu trữ model
+    if not os.path.exists(model_path):
+        logger.info("📥 Model chưa tồn tại, đang tải từ Hugging Face...")
+        embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+        embedding_model.save(model_path)  # Lưu model vào thư mục local
+        logger.info(f"✅ Model đã được tải và lưu tại {model_path}")
+    else:
+        logger.info(f"📂 Đang tải model từ thư mục local: {model_path}")
+        embedding_model = SentenceTransformer(model_path)
 
     return {
         "vectorized_data": vectorized_data,
