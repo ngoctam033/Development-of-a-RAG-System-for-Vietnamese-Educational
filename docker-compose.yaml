@@ -4,8 +4,54 @@ include:
   - ./open-webui/docker-compose.yaml
   - ./spark-service/docker-compose.yaml
   - ./minio-service/docker-compose.yaml
+  - ./init-service/docker-compose.yaml
 # Cấu hình bổ sung hoặc ghi đè (nếu cần)
 # services:
 #   service1:
 #     environment:
 #       - ADDITIONAL_VAR=value
+
+services:
+  postgres:
+    networks:
+      - lk_network
+
+  redis:
+    networks:
+      - lk_network
+
+  airflow-apiserver:
+    networks:
+      - lk_network
+
+  airflow-scheduler:
+    networks:
+      - lk_network
+
+  airflow-dag-processor:
+    networks:
+      - lk_network
+
+  airflow-worker:
+    networks:
+      - lk_network
+
+  airflow-triggerer:
+    networks:
+      - lk_network
+
+  airflow-init:
+    networks:
+      - lk_network
+
+  airflow-cli:
+    networks:
+      - lk_network
+
+  flower:
+    networks:
+      - lk_network
+
+networks:
+  lk_network:
+    driver: bridge
