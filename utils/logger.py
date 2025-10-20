@@ -29,8 +29,10 @@ def setup_logger(logger_name='rag_pipeline', log_dir='logs', level=logging.INFO)
         
     logger.setLevel(level)
     
-    # Định dạng log
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    # Định dạng log chi tiết (thêm thông tin file và dòng lệnh)
+    formatter = logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - [%(filename)s:%(lineno)d] - %(message)s'
+    )
     
     # Handler cho file (với rotation)
     file_handler = RotatingFileHandler(
