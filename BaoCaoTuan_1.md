@@ -2,11 +2,12 @@
 
 Tên đề tài: XÂY DỰNG HỆ THỐNG HỎI ĐÁP TỰ ĐỘNG ỨNG DỤNG KỸ THUẬT LLM OPS VÀ RAG  
 Giảng viên hướng dẫn: ThS. Nguyễn Văn Chiến
-Thời gian thực hiện: 13/10/2025 - 20/10/2025
 Sinh viên thực hiện:
 
 - Nguyễn Ngọc Tâm – 2151040051
 - Phạm Hoài Kiệt – 2251150058
+
+Thời gian thực hiện: 13/10/2025 - 20/10/2025
 
 ---
 
