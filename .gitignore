@@ -10,3 +10,4 @@ data/processed/Phu luc 3b_Mau CTDT thong thuong KM22_chunks.json
 data/vector_store/vectorized_data.pkl
 data/vector_store/vectorized_metadata.json
 .env
+.models/
