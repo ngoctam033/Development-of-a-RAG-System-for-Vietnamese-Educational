@@ -16,9 +16,9 @@ from rag_pipeline.vectorization.embedder import vectorize_chunks_pipeline
 from config.pipeline_config import (
     PROCESSING_DATA_FOLDER_PATH, 
     VECTOR_STORE_PATH,
-    EMBEDDING_MODEL_NAME,
     VECTORIZATION_CONFIG
 )
+from config.models_config import EMBEDDING_MODEL_NAME
 
 from utils.logger import logger
 
