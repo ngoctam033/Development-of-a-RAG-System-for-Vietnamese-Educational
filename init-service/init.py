@@ -11,7 +11,7 @@ MINIO_ACCESS_KEY = "admin"
 MINIO_SECRET_KEY = "admin123"
 MINIO_SECURE = False  # True nếu dùng https
 
-DEFAULT_BUCKET_NAME = "datawarehouse"
+DEFAULT_BUCKET_NAME = "datalakehouse"
 
 # Endpoint cho MinIO
 MINIO_CLUSTER_ENDPOINT = "minio1:9000"  # hoặc minio1:9000 nếu trong cluster
