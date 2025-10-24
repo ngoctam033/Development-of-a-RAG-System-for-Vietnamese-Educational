@@ -11,3 +11,4 @@ data/vector_store/vectorized_data.pkl
 data/vector_store/vectorized_metadata.json
 .env
 .models/
+open-webui/.open-webui/
