@@ -13,3 +13,5 @@ data/vector_store/vectorized_metadata.json
 .models/
 open-webui/.open-webui/
 all_chunks_combined.json
+data/processed/Phu luc 3b_Mau CTDT thong thuong KM22.md
+data/raw/Phu luc 3b_Mau CTDT thong thuong KM22.pdf
