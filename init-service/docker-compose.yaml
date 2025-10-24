@@ -1,12 +1,10 @@
-service:
+services:
   init:
     build:
-      context: ./init-service
+      context: .
       dockerfile: Dockerfile
     depends_on:
       - minio1
-    networks:
-      - dwh_network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://minio1:9000"]
       interval: 10s

@@ -19,10 +19,3 @@ services:
       
     # command: server --address ":9000" --console-address ":9001" http://minio{1...4}/bitnami/minio/data
     # command: server --address ":9000" --console-address ":9001" /bitnami/minio/data
-
-    networks:
-      - dwh_network
-
-networks:
-  dwh_network:
-    driver: bridge

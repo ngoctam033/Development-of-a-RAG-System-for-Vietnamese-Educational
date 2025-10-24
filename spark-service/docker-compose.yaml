@@ -11,8 +11,6 @@ services:
     ports:
       - "9080:8080"
       - "9077:7077"
-    networks:
-      - spark-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080"]
       interval: 30s
@@ -35,14 +33,8 @@ services:
       - "9081:8081"
     depends_on:
       - spark-master
-    networks:
-      - spark-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081"]
       interval: 30s
       timeout: 10s
       retries: 3
-
-networks:
-  spark-network:
-    driver: bridge
