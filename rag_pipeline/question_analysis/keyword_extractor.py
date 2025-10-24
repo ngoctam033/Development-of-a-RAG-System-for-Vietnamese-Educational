@@ -1,5 +1,3 @@
-
-
 import json
 import os
 from typing import List, Set
@@ -53,7 +51,10 @@ def match_labels_by_keywords(labels: List[str], keywords: List[str], threshold: 
     scored_labels.sort(key=lambda x: x[1], reverse=True)
     return [label for label, sim in scored_labels[:top_k]]
 
-def extract_keywords(question: str, vector_store_path: str, top_n: int = 100, threshold: float = 0.5) -> List[str]:
+def extract_keywords(question: str,
+                     vector_store_path: str = VECTOR_STORE_PATH,
+                     top_n: int = 100,
+                     threshold: float = 0.5) -> List[str]:
     """
     Trích xuất từ khóa từ câu hỏi sử dụng KeyBERT và các phương pháp khác.
     """

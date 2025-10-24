@@ -7,7 +7,7 @@ import re
 
 from rag_pipeline.retrieval.vector_store import load_vector_store
 from rag_pipeline.generation.llm import GeminiGenerator
-from rag_pipeline.main import answer_question
+from rag_pipeline.generation.answer_generator import answer_question
 
 from utils.logger import logger
 
@@ -50,7 +50,7 @@ def run_qa_interface():
             logger.info(f"🔄 Câu hỏi sau khi làm sạch: {question}")
         
         # Get answer from pipeline (functional)
-        result = answer_question(question, vector_store, generator, top_k=100)
+        result = answer_question(question)
         
         # Display results
         logger.info("\n" + "-"*50)

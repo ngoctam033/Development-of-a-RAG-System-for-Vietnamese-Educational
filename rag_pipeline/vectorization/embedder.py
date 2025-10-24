@@ -162,7 +162,6 @@ def extract_texts_from_chunks(chunks: List[Dict[str, Any]]) -> List[str]:
     logger.info(f"Extracted {len(texts)} texts for embedding")
     return texts
 
-
 def generate_embeddings_batch(
     texts: List[str], 
     model: SentenceTransformer,
