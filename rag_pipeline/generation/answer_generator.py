@@ -1,6 +1,6 @@
 from typing import Dict, Any
 from rag_pipeline.llm.llm import GeminiGenerator
-from rag_pipeline.retrieval.vector_store import search_similar
+from rag_pipeline.retrieval.search import search_similar
 from rag_pipeline.question_analysis.keyword_extractor import extract_keywords
 from rag_pipeline.retrieval.vector_store import load_vector_store
 from config.llm_api_config import GEMINI_API_KEY
