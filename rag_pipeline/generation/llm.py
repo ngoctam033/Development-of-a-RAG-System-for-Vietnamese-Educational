@@ -3,7 +3,6 @@ LLM generation module for answering questions using Gemini Pro.
 """
 
 import google.generativeai as genai
-from typing import Dict, Any
 
 class GeminiGenerator:
     def __init__(self, api_key: str):

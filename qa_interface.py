@@ -9,8 +9,6 @@ from rag_pipeline.generation.answer_generator import answer_question
 
 from utils.logger import logger
 
-from config.llm_api_config import GEMINI_API_KEY
-
 def run_qa_interface():
     """
     Simple command-line interface for Q&A system

@@ -13,7 +13,7 @@ import json
 import pickle
 import os
 import numpy as np
-from typing import List, Dict, Optional, Tuple, Any
+from typing import List, Dict, Optional, Any
 from sentence_transformers import SentenceTransformer
 
 from utils.logger import logger as logger

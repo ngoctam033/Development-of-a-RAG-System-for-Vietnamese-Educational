@@ -11,9 +11,7 @@ Module này chịu trách nhiệm:
 import re
 import json
 import os
-from typing import List, Dict, Tuple, Optional
-import time
-
+from typing import List, Dict, Tuple
 from utils.logger import logger
 
 def parse_markdown_hierarchy(markdown_content: str) -> dict:
