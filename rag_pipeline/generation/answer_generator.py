@@ -2,14 +2,16 @@ from typing import Dict, Any
 from rag_pipeline.generation.llm import GeminiGenerator
 from rag_pipeline.retrieval.vector_store import search_similar
 from rag_pipeline.question_analysis.keyword_extractor import extract_keywords
+from rag_pipeline.retrieval.vector_store import load_vector_store
 from config.pipeline_config import VECTOR_STORE_PATH, VECTORIZATION_CONFIG
+from config.llm_api_config import GEMINI_API_KEY
 
 
 def answer_question(
     question: str,
-    vector_store: Dict[str, Any],
-    generator: GeminiGenerator,
-    top_k: int = 3,
+    generator: GeminiGenerator = None,
+    vector_store: Dict[str, Any] = None,
+    top_k: int = 100,
     header_path_filter=None,
     related_docs=None
 ) -> Dict[str, Any]:
@@ -28,6 +30,11 @@ def answer_question(
     # If not provided, extract keywords and search similar docs
     if header_path_filter is None:
         header_path_filter = extract_keywords(question)
+    # If not generator provided
+    if generator is None:
+        generator = GeminiGenerator(api_key=GEMINI_API_KEY)  # Placeholder, should raise error or handle properly
+    if vector_store is None:
+        vector_store = load_vector_store()
     if related_docs is None:
         related_docs = search_similar(question, vector_store, top_k=top_k, header_path_filter=header_path_filter)
 

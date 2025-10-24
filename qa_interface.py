@@ -5,8 +5,6 @@ Command line interface for the RAG system
 import os
 import re
 
-from rag_pipeline.retrieval.vector_store import load_vector_store
-from rag_pipeline.generation.llm import GeminiGenerator
 from rag_pipeline.generation.answer_generator import answer_question
 
 from utils.logger import logger
@@ -17,11 +15,6 @@ def run_qa_interface():
     """
     Simple command-line interface for Q&A system
     """
-    
-
-    # Initialize components
-    vector_store = load_vector_store()
-    generator = GeminiGenerator(api_key=GEMINI_API_KEY)
 
     logger.info("\n" + "="*50)
     logger.info("🤖 HỆ THỐNG HỎI ĐÁP CHƯƠNG TRÌNH ĐÀO TẠO")
