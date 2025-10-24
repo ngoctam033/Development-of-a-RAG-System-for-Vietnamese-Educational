@@ -1,13 +1,15 @@
 from typing import Dict, Any
-from rag_pipeline.generation.llm import GeminiGenerator
+from rag_pipeline.llm.llm import GeminiGenerator
 from rag_pipeline.retrieval.vector_store import search_similar
 from rag_pipeline.question_analysis.keyword_extractor import extract_keywords
 from rag_pipeline.retrieval.vector_store import load_vector_store
 from config.llm_api_config import GEMINI_API_KEY
+from rag_pipeline.chat_context import context_manager
 
 
 def answer_question(
     question: str,
+    chat_context_manager: context_manager.ChatContextManager,
     generator: GeminiGenerator = None,
     vector_store: Dict[str, Any] = None,
     top_k: int = 100,
@@ -39,6 +41,9 @@ def answer_question(
 
     # Build context from retrieved documents
     context = ""
+    user_chat_history = chat_context_manager.get_user_questions()
+    print("User chat history:", user_chat_history)
+
     sources = []
     for i, doc in enumerate(related_docs):
         context += f"Tài liệu {i+1}:\n{doc['content']}\n\n"
@@ -49,7 +54,7 @@ def answer_question(
         sources.append(source_info)
 
     # Generate answer using LLM
-    answer = generator.generate_answer(question, context)
+    answer = generator.generate_answer(question, context, user_chat_history)
 
     # Return complete result
     return {
