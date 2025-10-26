@@ -13,6 +13,8 @@ import json
 import os
 from typing import List, Dict, Tuple
 from utils.logger import logger
+import time
+import pprint
 
 def parse_markdown_hierarchy(markdown_content: str) -> dict:
     """
@@ -70,6 +72,7 @@ def flatten_markdown_hierarchy(nodes, parent_headers=None, parent_level=0, extra
         source_info = {}
     results = []
     for idx, node in enumerate(nodes):
+        # time.sleep(5)
         headers = parent_headers + [node["header"]] if node["header"] else parent_headers
         header_path = " > ".join([h for h in headers if h])
         meta = {
@@ -83,14 +86,16 @@ def flatten_markdown_hierarchy(nodes, parent_headers=None, parent_level=0, extra
         meta.update(extra_metadata)
         # Đệ quy cho children trước
         child_chapter_idx = chapter_idx + 1 if node["level"] == 1 else chapter_idx
-        children_chunks = flatten_markdown_hierarchy(node["children"], headers, node["level"], extra_metadata, child_chapter_idx, source_info)
-        results.extend(children_chunks)
-        # Nếu là node lá (không có children) và content thực sự có nội dung
+        # Luôn lưu content của node nếu có nội dung thực sự
         content_stripped = node["content"].strip()
-        if not node["children"] and content_stripped and content_stripped != "\n":
+        logger.info("Processing node:\n" + pprint.pformat(node["content"].strip(), indent=2, width=120))
+        if content_stripped and content_stripped != "\n":
             content = header_path + "\n" + content_stripped if content_stripped else header_path
             chunk = {"content": content, "metadata": meta}
             results.append(chunk)
+            logger.info(f"Created chunk: {chunk}")
+        children_chunks = flatten_markdown_hierarchy(node["children"], headers, node["level"], extra_metadata, child_chapter_idx, source_info)
+        results.extend(children_chunks)
     return results
 
 def read_markdown_file(file_path: str) -> str:
@@ -190,6 +195,8 @@ def chunk_markdown_file(input_file_path: str, output_file_path: str = "vectoriza
 
     # Bước 2: Phân tích cấu trúc phân cấp
     hierarchy_dict = parse_markdown_hierarchy(markdown_content)
+
+    # logger.info(f"Cấu trúc phân cấp tối đa: {hierarchy_dict['nodes']}")
 
     # Bước 3: Tạo danh sách chunks từ cấu trúc phân cấp
     flat_chunks = flatten_markdown_hierarchy(hierarchy_dict['nodes'])

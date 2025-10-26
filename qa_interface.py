@@ -10,6 +10,7 @@ from rag_pipeline.chat_context import context_manager
 from rag_pipeline.retrieval.vector_store import load_vector_store
 
 from utils.logger import logger
+import time
 
 def run_qa_interface():
     """
@@ -47,8 +48,12 @@ def run_qa_interface():
         # Update user chat context
         user_chat_context.append_message(original_question)
 
+        # In ra quá trình xử lý câu hỏi và trả lời
+        logger.info("⏳ Đang xử lý câu hỏi...")
         # Get answer from pipeline (functional)
         result = answer_question(question,user_chat_context,vector_store=vector_store)
+        # Log answer
+        logger.info("✅ Câu hỏi đã được xử lý.")
         
         # Display results
         logger.info("\n" + "-"*50)

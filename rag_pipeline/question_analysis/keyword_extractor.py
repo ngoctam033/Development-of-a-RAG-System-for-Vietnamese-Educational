@@ -4,6 +4,8 @@ from typing import List, Set
 from sentence_transformers import SentenceTransformer
 from keybert import KeyBERT
 from config.pipeline_config import VECTOR_STORE_PATH
+from utils.logger import logger
+import time
 
 def tokenize(text: str) -> Set[str]:
     """
@@ -40,15 +42,30 @@ def match_labels_by_keywords(labels: List[str], keywords: List[str], threshold: 
     """
     So sánh mức độ tương đồng giữa label và từ khóa, trả về các label khớp nhất.
     """
+    # import pprint
     scored_labels = []
     keywords_set = set(k.lower() for k in keywords)
-    for label in labels:
+    # print("[LOG] ====== BẮT ĐẦU SO KHỚP LABEL VỚI TỪ KHÓA ======")
+    # print(f"[LOG] Từ khóa đầu vào: {keywords}")
+    # print(f"[LOG] Tập từ khóa chuẩn hóa: {keywords_set}")
+    for idx, label in enumerate(labels):
+        # print(f"[LOG] --- Label thứ {idx+1}: '{label}' ---")
+        time.sleep(1)
         label_set = set(label.lower().split())
+        # print(f"[LOG] Tập từ của label: {label_set}")
         intersection = label_set & keywords_set
-        union = label_set | keywords_set
+        keywords_string = ', '.join(sorted(keywords_set))
+        tokenized_keywords = tokenize(keywords_string)
+        union = label_set | tokenized_keywords
+        # print(f"[LOG] Giao nhau: {intersection}")
+        # print(f"[LOG] Hợp nhất: {union}")
         similarity = len(intersection) / len(union) if union else 0
+        # print(f"[LOG] Độ tương đồng (Jaccard): {similarity:.4f}")
         scored_labels.append((label, similarity))
     scored_labels.sort(key=lambda x: x[1], reverse=True)
+    # print("[LOG] ====== KẾT QUẢ SẮP XẾP LABEL THEO ĐỘ TƯƠNG ĐỒNG ======")
+    # pprint.pprint(scored_labels[:top_k])
+    # print(f"[LOG] Trả về top {top_k} label phù hợp nhất.")
     return [label for label, sim in scored_labels[:top_k]]
 
 def extract_keywords(question: str,
@@ -79,12 +96,10 @@ def extract_keywords(question: str,
     common_words = get_common_words(question, list_of_strings)
     # Gộp, loại trùng
     all_keywords = []
-    for kw in ner_keywords + noun_chunks + keybert_keywords + common_words:
+    for kw in common_words + keybert_keywords: # + ner_keywords + noun_chunks:
         kw = kw.strip()
         if kw and kw.lower() not in [k.lower() for k in all_keywords]:
             all_keywords.append(kw)
-        if len(all_keywords) >= top_n:
-            break
     list_labels = match_labels_by_keywords(list_of_strings, all_keywords[:top_n], threshold=threshold)
     return list_labels[:10]
 
