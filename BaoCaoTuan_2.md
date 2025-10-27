@@ -18,7 +18,7 @@ Báo cáo tóm tắt kết quả, các điểm cải tiến so với tuần 1, h
 
 ## 2. Kết quả đạt được
 
-- Hoàn thiện pipeline vector hóa và lưu trữ dữ liệu: Đã xây dựng quy trình đọc tài liệu, chunking, embedding và lưu trữ vector bằng FAISS.
+- Hoàn thiện pipeline vector hóa và lưu trữ dữ liệu: Đã xây dựng quy trình đọc tài liệu, chunking, embedding và lưu trữ vector.
 - Bổ sung chức năng trích xuất từ khóa trong câu hỏi, sử dụng KeyBERT kết hợp Jaccard similarity để lọc các vector ít liên quan trong top_k. Việc truy xuất tài liệu tập trung vào các chunk liên quan đến nội dung câu hỏi.
 - Đơn giản hóa và refactor QA interface, cải thiện flow CLI để thuận tiện cho việc chạy và kiểm thử.
 - Tách các chức năng chính (vectorization, QA, keyword extraction, chunking, logging, config) thành các module riêng biệt. Việc này giúp tăng khả năng mở rộng, bảo trì và kiểm thử từng phần.
