@@ -5,6 +5,8 @@ from rag_pipeline.question_analysis.keyword_extractor import extract_keywords
 from rag_pipeline.retrieval.vector_store import load_vector_store
 from config.llm_api_config import GEMINI_API_KEY
 from rag_pipeline.chat_context import context_manager
+from utils.logger import logger
+from config.prompt_templates import PROMPT_TEMPLATES
 
 
 def answer_question(
@@ -12,7 +14,7 @@ def answer_question(
     chat_context_manager: context_manager.ChatContextManager,
     generator: GeminiGenerator = None,
     vector_store: Dict[str, Any] = None,
-    top_k: int = 100,
+    top_k: int = 10,
     header_path_filter=None,
     related_docs=None
 ) -> Dict[str, Any]:
@@ -42,7 +44,7 @@ def answer_question(
     # Build context from retrieved documents
     context = ""
     user_chat_history = chat_context_manager.get_user_questions()
-    print("User chat history:", user_chat_history)
+    # print("User chat history:", user_chat_history)
 
     sources = []
     for i, doc in enumerate(related_docs):
