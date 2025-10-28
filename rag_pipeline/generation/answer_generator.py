@@ -55,8 +55,9 @@ def answer_question(
         }
         sources.append(source_info)
 
+    # logger.info("Đang tạo câu trả lời dựa trên ngữ cảnh thu thập được...")
     # Generate answer using LLM
-    answer = generator.generate_answer(question, context, user_chat_history)
+    answer = generator.generate_answer(question, context, user_chat_history, prompt_template=PROMPT_TEMPLATES["planning"])
 
     # Return complete result
     return {
