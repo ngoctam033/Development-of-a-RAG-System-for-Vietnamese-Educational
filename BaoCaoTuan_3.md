@@ -46,11 +46,52 @@ flowchart LR
   F --> G
   G --> H
   H --> I
-
 ```
 - Thu hẹp không gian tìm kiếm trước bằng metadata filter.
 - Sau đó lập chỉ mục con và query top_k trên tập nhỏ ⇒ precision tăng & latency giảm.
 - Prompt templates + logging giúp ổn định đầu ra và dễ debug.
+  
+```mermaid
+flowchart LR
+%% ========= OFFLINE PREP =========
+subgraph A ["Offline prep (không đổi)"]
+    A1["Ingest tài liệu"] --> A2["Chunking"]
+    A2 --> A3["Embedding"]
+    A3 --> A4["Vector store + metadata (header_path, ...)"]
+end
+
+%% ========= ONLINE QUERY =========
+subgraph B ["Online retrieval & generation (release-3-11)"]
+    Q1["User question"] --> Q2["Keyword extractor (KeyBERT)"]
+    Q1 --> Q3["Query embedding"]
+    Q1 --> Q4["Metadata pre-filter (header_path_filter)"]
+
+    Q4 --> Q5["Filtered IDs từ Vector store"]
+    Q5 --> Q6["Build sub-index (FAISS tạm) ↳ theo Filtered IDs"]
+
+    Q2 -- "query expansion / rerank" --> Q7
+    Q3 --> Q7["ANN search trên sub-index (adaptive top_k: 8–30)"]
+
+    Q7 --> Q8["Context builder"]
+    Q8 --> Q9["LLM với Prompt templates (planning / qa / ...)"]
+    Q9 --> Q10["Final answer"]
+end
+
+%% ========= OBSERVABILITY =========
+subgraph C ["Observability (tuần 3)"]
+    L1["Logger chi tiết: filtered size, build cost, search latency, top_k"]
+end
+
+Q4 -. "log" .-> L1
+Q6 -. "log" .-> L1
+Q7 -. "log" .-> L1
+Q9 -. "log" .-> L1
+```
+- Pre-filter trước khi search: lọc theo header_path_filter ➜ chỉ build sub-index tạm trên tập con liên quan ⇒ giảm nhiễu.
+- Adaptive top_k ở tầng ANN sau khi đã thu hẹp không gian tìm kiếm ⇒ độ trễ giảm, vẫn giữ độ liên quan.
+- KeyBERT: dùng cho query expansion (đẩy tín hiệu vào ANN) hoặc rerank nhẹ sau search.
+- Prompt templates: planning/qa/... giúp ổn định hành vi LLM và dễ A/B.
+- Logger chi tiết: theo dõi filtered size, thời gian build sub-index, latency, token… ⇒ debug nhanh & đo lường rõ.
 ---
 
 ## 3. Điểm cải tiến so với tuần 2
