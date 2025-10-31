@@ -24,32 +24,7 @@ Báo cáo tóm tắt kết quả tuần 3 đạt được, các điểm cải ti
 - Giảm độ trễ ở bước tổng hợp ngữ cảnh: Điều chỉnh top_k mặc định từ 100 → 10 trong answer generation, cắt chi phí hợp nhất ngữ cảnh khi tập sau lọc đã đủ hẹp.
 - Quan sát/giám sát retrieval tốt hơn: Bổ sung logger chi tiết (số lượng vector sau lọc, đường đi dữ liệu, bước build index…), giúp debug sai lệch tìm kiếm nhanh hơn.
 - Refactor luồng gọi LLM: GeminiGenerator.generate_answer(...) nhận template, thống nhất cách dựng prompt và tham số, giảm ràng buộc cứng trong mã.
-### Sơ đồ xử lý: pre-filter ➜ sub-index ➜ top_k
-
-```mermaid
-flowchart LR
-  A[User question]
-  B[Keyword extractor - KeyBERT]
-  C[Header / metadata filter]
-  D[(Vector store)]
-  E[Build sub-index - FAISS temp]
-  F[ANN search - top_k = 10]
-  G[Context builder]
-  H[LLM - prompt templates]
-  I[Answer]
-
-  A --> B
-  A --> C
-  C --> D
-  D --> E
-  E --> F
-  F --> G
-  G --> H
-  H --> I
-```
-- Thu hẹp không gian tìm kiếm trước bằng metadata filter.
-- Sau đó lập chỉ mục con và query top_k trên tập nhỏ ⇒ precision tăng & latency giảm.
-- Prompt templates + logging giúp ổn định đầu ra và dễ debug.
+### Sơ đồ xử lý: RAG Retrieval Workflow – release-3-11 (Pre-filter → Sub-index → Adaptive top_k)
   
 ```mermaid
 flowchart LR
@@ -87,12 +62,8 @@ Q6 -. "log" .-> L1
 Q7 -. "log" .-> L1
 Q9 -. "log" .-> L1
 ```
-- Pre-filter trước khi search: lọc theo header_path_filter ➜ chỉ build sub-index tạm trên tập con liên quan ⇒ giảm nhiễu.
-- Adaptive top_k ở tầng ANN sau khi đã thu hẹp không gian tìm kiếm ⇒ độ trễ giảm, vẫn giữ độ liên quan.
-- KeyBERT: dùng cho query expansion (đẩy tín hiệu vào ANN) hoặc rerank nhẹ sau search.
-- Prompt templates: planning/qa/... giúp ổn định hành vi LLM và dễ A/B.
-- Logger chi tiết: theo dõi filtered size, thời gian build sub-index, latency, token… ⇒ debug nhanh & đo lường rõ.
----
+ Lọc metadata trước ⇒ build sub-index trên tập con ⇒ ANN search với adaptive top_k; tổng hợp ngữ cảnh và trả lời qua prompt templates. Logger theo dõi filtered size, build cost, latency, top_k.
+
 
 ## 3. Điểm cải tiến so với tuần 2
 
