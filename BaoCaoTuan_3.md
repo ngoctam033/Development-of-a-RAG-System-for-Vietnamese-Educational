@@ -25,45 +25,65 @@ Báo cáo tóm tắt kết quả tuần 3 đạt được, các điểm cải ti
 - Quan sát/giám sát retrieval tốt hơn: Bổ sung logger chi tiết (số lượng vector sau lọc, đường đi dữ liệu, bước build index…), giúp debug sai lệch tìm kiếm nhanh hơn.
 - Refactor luồng gọi LLM: GeminiGenerator.generate_answer(...) nhận template, thống nhất cách dựng prompt và tham số, giảm ràng buộc cứng trong mã.
 ### Sơ đồ xử lý: RAG Retrieval Workflow – release-3-11 (Pre-filter → Sub-index → Adaptive top_k)
-  
-```mermaid
-flowchart LR
-%% ========= OFFLINE PREP =========
-subgraph A ["Offline prep (không đổi)"]
-    A1["Ingest tài liệu"] --> A2["Chunking"]
-    A2 --> A3["Embedding"]
-    A3 --> A4["Vector store + metadata (header_path, ...)"]
+
+``` mermaid
+flowchart TB
+
+%% ---- Classes ----
+classDef block fill:#1f2937,stroke:#9ca3af,color:#f9fafb
+classDef obs   fill:#374151,stroke:#9ca3af,color:#f9fafb,stroke-dasharray:3 3
+
+%% ---- ONLINE ----
+subgraph B["Online retrieval & generation (release-3-11)"]
+direction TB
+  Q1["User question"]
+  Q3["Load vector store & embedding model"]
+  Q4["Query embedding"]
+  Q5["Metadata pre-filter (if any)"]
+  Q6["FAISS search (global index)"]
+  Q7["Map results & choose top-k"]
+  Q8["Context builder"]
+  Q9["LLM generate (prompt)"]
+  Q10["Final answer"]
+  Q2["Keyword extractor -> header_path_filter"]
+
+  Q1 --> Q3 --> Q4 --> Q6 --> Q7 --> Q8 --> Q9 --> Q10
+  Q1 --> Q2 --> Q5 --> Q6
 end
 
-%% ========= ONLINE QUERY =========
-subgraph B ["Online retrieval & generation (release-3-11)"]
-    Q1["User question"] --> Q2["Keyword extractor (KeyBERT)"]
-    Q1 --> Q3["Query embedding"]
-    Q1 --> Q4["Metadata pre-filter (header_path_filter)"]
-
-    Q4 --> Q5["Filtered IDs từ Vector store"]
-    Q5 --> Q6["Build sub-index (FAISS tạm) ↳ theo Filtered IDs"]
-
-    Q2 -- "query expansion / rerank" --> Q7
-    Q3 --> Q7["ANN search trên sub-index (adaptive top_k: 8–30)"]
-
-    Q7 --> Q8["Context builder"]
-    Q8 --> Q9["LLM với Prompt templates (planning / qa / ...)"]
-    Q9 --> Q10["Final answer"]
+%% ---- OFFLINE ----
+subgraph A["Offline prep"]
+direction TB
+  A1["Ingest PDF -> Markdown"]
+  A2["Chunking + metadata"]
+  A3["Embedding chunks"]
+  A4["Store vector data + metadata"]
+  A1 --> A2 --> A3 --> A4
 end
 
-%% ========= OBSERVABILITY =========
-subgraph C ["Observability (tuần 3)"]
-    L1["Logger chi tiết: filtered size, build cost, search latency, top_k"]
+%% ---- LOGGING ----
+subgraph C["Logging"]
+  L1["dataset size, vector dim, search latency, n_results"]
 end
 
-Q4 -. "log" .-> L1
-Q6 -. "log" .-> L1
-Q7 -. "log" .-> L1
-Q9 -. "log" .-> L1
+Q3 -.-> L1
+Q6 -.-> L1
+Q9 -.-> L1
+
+%% ---- Apply classes AFTER definitions ----
+class Q1,Q2,Q3,Q4,Q5,Q6,Q7,Q8,Q9,Q10 block
+class A1,A2,A3,A4 block
+class L1 obs
+
 ```
- Lọc metadata trước ⇒ build sub-index trên tập con ⇒ ANN search với adaptive top_k; tổng hợp ngữ cảnh và trả lời qua prompt templates. Logger theo dõi filtered size, build cost, latency, top_k.
-
+- Offline prep: chuyển PDF → Markdown, cắt thành chunks, nhúng vector, lưu vector store + metadata.
+- Online retrieval:
+  - Trích keyword → metadata pre-filter(nếu cần) 
+  - Tạo query embedding
+  - FAISS search (global index) → lấy ID + điểm tương tự
+  - Map kết quả, chọn top-k và xây context
+- Generation: LLM nhận prompt + context → sinh câu trả lời cuối cùng.
+- Logging: ghi kích thước dữ liệu, chiều vector, độ trễ truy vấn, số kết quả… để theo dõi hiệu năng và tái lập lỗi.
 
 ## 3. Điểm cải tiến so với tuần 2
 
