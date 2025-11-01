@@ -17,7 +17,7 @@ def search_similar(
     faiss_index = store["faiss_index"]
     vectorized_data = store["vectorized_data"]
 
-    logger.info("🔍 Bắt đầu tìm kiếm tài liệu tương tự...")
+    # logger.info("🔍 Bắt đầu tìm kiếm tài liệu tương tự...")
 
     # Nếu có header_path_filter, lọc trước vectorized_data
     if header_path_filter is not None:
@@ -58,8 +58,8 @@ def search_similar(
         if len(results) >= top_k:
             break
     logger.info(f"✅ Số kết quả trả về: {len(results)}")
-    for item in results:
-        logger.info(f"🔍 Kết quả: {item['metadata']['header_path']} (Score: {item['similarity_score']})")
+    # for item in results:
+    #     logger.info(f"🔍 Kết quả: {item['metadata']['header_path']} (Score: {item['similarity_score']})")
     return results
 
 def filter_vectors_by_metadata(vectorized_data: List[Dict[str, Any]], metadata_filter: dict) -> List[Dict[str, Any]]:
