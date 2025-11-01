@@ -50,7 +50,7 @@ def match_labels_by_keywords(labels: List[str], keywords: List[str], threshold: 
     # print(f"[LOG] Tập từ khóa chuẩn hóa: {keywords_set}")
     for idx, label in enumerate(labels):
         # print(f"[LOG] --- Label thứ {idx+1}: '{label}' ---")
-        time.sleep(1)
+        # time.sleep(1)
         label_set = set(label.lower().split())
         # print(f"[LOG] Tập từ của label: {label_set}")
         intersection = label_set & keywords_set
