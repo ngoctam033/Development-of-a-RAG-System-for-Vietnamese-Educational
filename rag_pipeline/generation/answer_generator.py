@@ -3,7 +3,6 @@ from rag_pipeline.llm.llm import GeminiGenerator
 from rag_pipeline.retrieval.search import search_similar
 from rag_pipeline.question_analysis.keyword_extractor import extract_keywords
 from rag_pipeline.retrieval.vector_store import load_vector_store
-from config.llm_api_config import GEMINI_API_KEY
 from rag_pipeline.chat_context import context_manager
 from utils.logger import logger
 from config.prompt_templates import PROMPT_TEMPLATES
@@ -35,7 +34,7 @@ def answer_question(
         header_path_filter = extract_keywords(question)
     # If not generator provided
     if generator is None:
-        generator = GeminiGenerator(api_key=GEMINI_API_KEY)  # Placeholder, should raise error or handle properly
+        generator = GeminiGenerator()  # Placeholder, should raise error or handle properly
     if vector_store is None:
         vector_store = load_vector_store()
     if related_docs is None:

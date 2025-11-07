@@ -2,7 +2,6 @@ import dotenv
 import os
 dotenv.load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 # Lấy tất cả các key có tên GEMINI_API_KEY_1, GEMINI_API_KEY_2, ...
 GEMINI_API_KEYS = []
 for i in range(1, 10):  # Giả sử tối đa 10 key, dừng khi không còn key

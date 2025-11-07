@@ -8,8 +8,6 @@ from rag_pipeline.generation.answer_generator import answer_question
 from rag_pipeline.retrieval.vector_store import load_vector_store
 import logging
 
-from config.llm_api_config import GEMINI_API_KEY
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -18,7 +16,7 @@ vector_store = load_vector_store()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-generator = GeminiGenerator(api_key=GEMINI_API_KEY)
+generator = GeminiGenerator()
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):

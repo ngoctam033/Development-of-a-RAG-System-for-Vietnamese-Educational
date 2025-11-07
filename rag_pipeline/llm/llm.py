@@ -4,18 +4,18 @@ LLM generation module for answering questions using Gemini Pro.
 
 import google.generativeai as genai
 from config.prompt_templates import PROMPT_TEMPLATES
+from config.llm_api_config import GeminiApiKeyRotator
 from config.prompt_templates import render_prompt
 
 class GeminiGenerator:
-    def __init__(self, api_key: str):
+    def __init__(self):
         """
         Initialize the Gemini generator
         
         Args:
             api_key (str): Gemini API key
         """
-        # Configure Gemini client
-        genai.configure(api_key=api_key)
+        self.api_key_rotator = GeminiApiKeyRotator()
         self.model = genai.GenerativeModel('gemini-2.0-flash')
         
     def generate_answer(self,
@@ -34,6 +34,8 @@ class GeminiGenerator:
         Returns:
             str: Generated answer
         """
+        # Configure Gemini client
+        genai.configure(api_key=self.api_key_rotator.get_next_key())
         history_text = "\n".join([f"- {q}" for q in user_chat_history]) if user_chat_history else "Không có lịch sử câu hỏi trước đó."
         prompt = render_prompt(
             prompt_template["template"],
