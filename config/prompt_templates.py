@@ -1,7 +1,29 @@
-PLANNING_PROMPT = '''Bạn là agent lập kế hoạch cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM. Dựa trên câu hỏi và ngữ cảnh dưới đây, hãy liệt kê các truy vấn hoặc hành động cần thực hiện để trả lời đúng nhất.
+QUESTION_NORMALIZATION_PROMPT = '''Bạn là agent chuẩn hóa câu hỏi cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM.
+Nhiệm vụ của bạn là phân tích và diễn đạt lại câu hỏi của người dùng sao cho rõ ràng, đầy đủ ngữ nghĩa, tránh mơ hồ hoặc thiếu thông tin.
 
-QUESTION: {question}
-CONTEXT: {context}
+QUESTION GỐC:
+{question}
+
+INSTRUCTIONS (bắt buộc):
+1) Đọc kỹ câu hỏi gốc, xác định ý định và thông tin cần hỏi.
+2) Nếu câu hỏi chưa rõ ràng, hãy bổ sung hoặc diễn đạt lại để đảm bảo câu hỏi tường minh, dễ hiểu, không gây nhầm lẫn.
+3) Không thêm thông tin ngoài ý định của người dùng, chỉ làm rõ hoặc bổ sung cho đủ ý.
+4) Nếu câu hỏi đã rõ ràng, chỉ cần lặp lại nguyên văn.
+5) Trả lời bằng tiếng Việt.
+
+OUTPUT FORMAT:
+QUESTION CHUẨN HÓA:
+<ghi lại câu hỏi đã được chuẩn hóa, rõ nghĩa>
+
+Bắt đầu chuẩn hóa câu hỏi bây giờ.
+'''
+PLANNING_PROMPT = '''Bạn là agent lập kế hoạch cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM. Dựa trên câu hỏi và ngữ cảnh dưới đây, hãy liệt kê các truy vấn hoặc hành động cần thực hiện để trả lời đúng nhất.
+USER CHAT HISTORY:
+{user_chat_history}
+QUESTION:
+{question}
+CONTEXT:
+{context}
 
 INSTRUCTIONS (bắt buộc):
 1) Trả lời NGẮN GỌN và RÕ RÀNG bằng tiếng Việt — phần "KẾ HOẠCH" phải chứa danh sách các bước/truy vấn cần thiết, tối đa 5 bước.
@@ -36,7 +58,8 @@ Bắt đầu lập kế hoạch bây giờ.
 REASONING_PROMPT = '''Bạn là agent phân tích và suy luận cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM. Dựa trên các tài liệu đã truy xuất và câu hỏi, hãy xác định thông tin còn thiếu hoặc các bước cần bổ sung để trả lời chính xác.
 
 QUESTION: {question}
-RETRIEVED_DOCS: {retrieved_docs}
+RETRIEVED_DOCS:
+{retrieved_docs}
 
 INSTRUCTIONS (bắt buộc):
 1) Trả lời NGẮN GỌN và RÕ RÀNG bằng tiếng Việt — phần "PHÂN TÍCH" phải chứa kết luận về thông tin đã có và cần bổ sung, tối đa 3 điểm.
@@ -133,9 +156,6 @@ Bắt đầu quan sát bây giờ.
 QA_VIET_UNI_PROMPT = '''Bạn là trợ lý trí tuệ nhân tạo chuyên về các chương trình đào tạo đại học.
 Hãy trả lời câu hỏi dưới đây dựa trên thông tin được cung cấp trong phần CONTEXT và lịch sử hội thoại trước đó của người dùng.
 
-USER CHAT HISTORY:
-{user_chat_history}
-
 CONTEXT:
 {context}
 
@@ -169,27 +189,30 @@ Bắt đầu trả lời bây giờ.
 '''
 
 PROMPT_TEMPLATES = {
-    "qa": {
-        "template": QA_VIET_UNI_PROMPT,
-        "fields": ["question", "context", "user_chat_history"]
+    "question_normalization": {
+        "template": QUESTION_NORMALIZATION_PROMPT,
+        "fields": ["question"]
     },
     "planning": {
         "template": PLANNING_PROMPT,
         "fields": ["question", "context"]
     },
-    "reasoning": {
-        "template": REASONING_PROMPT,
-        "fields": ["question", "retrieved_docs"]
-    },
     "acting": {
         "template": ACTING_PROMPT,
         "fields": ["plan", "reasoning"]
+    },
+    "reasoning": {
+        "template": REASONING_PROMPT,
+        "fields": ["question", "retrieved_docs"]
     },
     "observing": {
         "template": OBSERVING_PROMPT,
         "fields": ["results"]
     },
-    # ...
+    "qa": {
+        "template": QA_VIET_UNI_PROMPT,
+        "fields": ["question", "context"]
+    },
 }
 
 def render_prompt(template: str, fields: list, values: dict):
