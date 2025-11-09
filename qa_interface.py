@@ -11,6 +11,7 @@ from rag_pipeline.retrieval.vector_store import load_vector_store
 
 from utils.logger import logger
 import time
+import json
 
 def run_qa_interface():
     """
@@ -60,10 +61,12 @@ def run_qa_interface():
         logger.info("📝 Câu trả lời:")
         logger.info("-"*50)
         logger.info(result["answer"])
-        
         logger.info("\n" + "-"*50)
         logger.info("🔍 Nguồn tham khảo:")
         logger.info("-"*50)
+        logger.info("Reasoning Trace:\n" + json.dumps(result['reasoning_trace'],
+                                                      ensure_ascii=False,
+                                                      indent=2))
         for i, source in enumerate(result["sources"]):
             logger.info(f"  [{i+1}] {source['header_path']} (Score: {source['similarity_score']})")
         logger.info("-"*50)
