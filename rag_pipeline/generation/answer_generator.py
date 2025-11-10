@@ -1,5 +1,6 @@
 from typing import Dict, Any
-from rag_pipeline.llm.llm import AgenticGeminiRAG
+import json
+from rag_pipeline.llm.agentic_rag import AgenticGeminiRAG
 from rag_pipeline.retrieval.vector_store import load_vector_store
 from rag_pipeline.chat_context import context_manager
 from utils.logger import logger
@@ -7,7 +8,7 @@ from utils.logger import logger
 
 def answer_question(
     question: str,
-    chat_context_manager: context_manager.ChatContextManager,
+    user_chat_history,
     generator: AgenticGeminiRAG = None,
     vector_store: Dict[str, Any] = None,
     top_k: int = 10,
@@ -29,7 +30,6 @@ def answer_question(
         generator = AgenticGeminiRAG()  # Placeholder, should raise error or handle properly
     if vector_store is None:
         vector_store = load_vector_store()
-    user_chat_history = chat_context_manager.get_user_questions()
     # print("User chat history:", user_chat_history)
 
 
@@ -37,18 +37,17 @@ def answer_question(
     # logger.info("Đang tạo câu trả lời dựa trên ngữ cảnh thu thập được...")
     # Generate answer using LLM
     result = generator.agentic_pipeline(question,
-                                        user_chat_history,
-                                        vector_store=vector_store
+                                        vector_store,
+                                        user_chat_history=user_chat_history
                                         )
 
-
-    # Return complete result
-    return {
+    return_dict = {
         "question": question,
-        "plan": result["plan"],
-        # "reasoning": result["reasoning"],
-        # "action": result["action"],
-        # "observation": result["observation"],
-        "answer": result["answer"],
-        "sources": result["sources"]
+        "answer": result.get("answer", ""),
+        "reasoning_trace": result.get("reasoning_trace", [])
     }
+    #  in ra return
+    logger.info("Return dict:\n" + json.dumps(return_dict, ensure_ascii=False, indent=2))
+    logger.info("-" * 50)
+    # Return all keys from agentic_pipeline result
+    return return_dict

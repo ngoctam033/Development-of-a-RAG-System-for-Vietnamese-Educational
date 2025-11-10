@@ -33,18 +33,18 @@ def search_similar(
             faiss_index = faiss.IndexFlatIP(embeddings.shape[1])
             faiss.normalize_L2(embeddings)
             faiss_index.add(embeddings)
-            logger.info(f"✅ Đã build lại FAISS index cho tập vector đã lọc")
+            # logger.info(f"✅ Đã build lại FAISS index cho tập vector đã lọc")
         else:
-            logger.warning("⚠️ Không còn vector nào sau khi lọc, trả về rỗng.")
+            # logger.warning("⚠️ Không còn vector nào sau khi lọc, trả về rỗng.")
             return []
 
-    logger.info(f"🔎 Đang mã hóa query và tìm kiếm tương đồng FAISS cho: '{query_text}'")
+    # logger.info(f"🔎 Đang mã hóa query và tìm kiếm tương đồng FAISS cho: '{query_text}'")
     query_embedding = model.encode(query_text)
     query_embedding = np.array(query_embedding, dtype='float32').reshape(1, -1)
     faiss.normalize_L2(query_embedding)
 
     scores, indices = faiss_index.search(query_embedding, top_k)
-    logger.info(f"✅ Đã tìm kiếm xong, trả về top {top_k} kết quả.")
+    # logger.info(f"✅ Đã tìm kiếm xong, trả về top {top_k} kết quả.")
     results = []
     for i, idx in enumerate(indices[0]):
         if idx >= len(vectorized_data):
@@ -57,7 +57,7 @@ def search_similar(
         })
         if len(results) >= top_k:
             break
-    logger.info(f"✅ Số kết quả trả về: {len(results)}")
+    # logger.info(f"✅ Số kết quả trả về: {len(results)}")
     # for item in results:
     #     logger.info(f"🔍 Kết quả: {item['metadata']['header_path']} (Score: {item['similarity_score']})")
     return results
@@ -83,5 +83,5 @@ def filter_vectors_by_metadata(vectorized_data: List[Dict[str, Any]], metadata_f
             mask = mask & (df[k] == v)
     filtered_indices = df[mask].index.tolist()
     filtered = [vectorized_data[i] for i in filtered_indices]
-    logger.info(f"✅ Đã lọc xong, còn lại {len(filtered)} vector.")
+    # logger.info(f"✅ Đã lọc xong, còn lại {len(filtered)} vector.")
     return filtered

@@ -23,7 +23,7 @@ def setup_logger(logger_name='rag_pipeline', log_dir='logs', level=logging.INFO)
     # Tạo logger
     logger = logging.getLogger(logger_name)
     
-    # Kiểm tra xem logger đã được cấu hình chưa để tránh duplicate
+    # Nếu logger đã có handler, không thêm nữa để tránh duplicate log
     if logger.hasHandlers():
         return logger
         
@@ -48,9 +48,12 @@ def setup_logger(logger_name='rag_pipeline', log_dir='logs', level=logging.INFO)
     console_handler.setLevel(level)
     console_handler.setFormatter(formatter)
     
-    # Thêm handlers vào logger
+    # Thêm handlers vào logger (chỉ khi chưa có handler nào)
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
+    
+    # Đảm bảo không propagate lên root logger (tránh log lặp)
+    logger.propagate = False
     
     return logger
 

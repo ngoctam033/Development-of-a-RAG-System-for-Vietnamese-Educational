@@ -3,20 +3,21 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 import streamlit as st
-from rag_pipeline.llm.llm import GeminiGenerator
+from rag_pipeline.llm.agentic_rag import AgenticGeminiRAG
 from rag_pipeline.generation.answer_generator import answer_question
 from rag_pipeline.retrieval.vector_store import load_vector_store
 import logging
+from rag_pipeline.chat_context import context_manager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
+user_chat_context = context_manager.ChatContextManager()
 st.title("Chatbot hỗ trợ học tập 🎓")
-vector_store = load_vector_store()
+# vector_store = load_vector_store()
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-generator = GeminiGenerator()
+generator = AgenticGeminiRAG()
 
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
@@ -29,8 +30,10 @@ if question:
     st.session_state.messages.append({"role": "user", "content": question})
     with st.chat_message("user"):
         st.markdown(question)
-
-    answer = answer_question(question, vector_store, generator, top_k=100)["answer"]
+    full_chat_history = [msg["content"] for msg in st.session_state.messages]
+    answer = answer_question(question,
+                             generator=generator,
+                             user_chat_history=full_chat_history)["answer"]
     st.session_state.messages.append({"role": "assistant", "content": answer})
     with st.chat_message("assistant"):
         st.markdown(answer)
