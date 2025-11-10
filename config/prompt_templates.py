@@ -18,15 +18,17 @@ YÊU CẦU:
 6) Không thêm thông tin ngoài reasoning_trace. Nếu phải suy đoán, đánh dấu rõ là "suy đoán" và nêu cơ sở.
 
 ĐỊNH DẠNG TRẢ LỜI (bắt buộc):
-TRẢ LỜI CUỐI CÙNG:
+<<final_answer>>
 <điền câu trả lời cuối cùng ở đây>
+<</final_answer>>
 
-NGUỒN THAM KHẢO:
+<<sources>>
 - <liệt kê các nguồn nếu có, mỗi nguồn một dòng, nếu không có thì ghi "Không có">
+<</sources>>
 
-GIẢI THÍCH QUÁ TRÌNH SUY LUẬN (nếu có lặp lại hoặc cần làm rõ):
+<<reasoning_explanation>>
 <giải thích ngắn gọn quá trình lặp lại, các điểm đã được làm rõ, hoặc lý do phải lặp lại>
-
+<</reasoning_explanation>>
 Chỉ trả về đúng định dạng trên, không thêm bất kỳ thông tin nào khác.
 '''
 EVALUATE_REASONING_TRACE_COMPLETENESS_PROMPT = '''
@@ -66,13 +68,10 @@ Bạn là agent đánh giá độ đầy đủ của dữ liệu đã thu thập
 REASONING_TRACE (dấu vết các truy vấn và kết quả từng lần):
 {reasoning_trace}
 
-CONTEXT:
-{context}
-
 YÊU CẦU:
 1) Đọc kỹ reasoning_trace, tổng hợp các thông tin đã thu thập được qua từng truy vấn.
 2) Đánh giá xem các dữ liệu này đã đủ để trả lời hoàn chỉnh câu hỏi của người dùng chưa.
-3) Nếu đã đủ, ghi rõ: "Đã đủ dữ liệu để trả lời." và ở cuối câu trả lời thêm dòng: ##STOP_REASONING##
+3) Nếu đã đủ, ghi rõ: "Đã đủ dữ liệu để trả lời."
 4) Nếu chưa đủ, chỉ ra cụ thể còn thiếu thông tin gì, hoặc cần truy vấn thêm nội dung nào.
 5) Đề xuất một câu truy vấn tiếp theo (nếu cần) để hoàn thiện dữ liệu trả lời.
 
@@ -85,8 +84,6 @@ YÊU CẦU:
 
 <<evaluation_reason>>
 <giải thích ngắn gọn dựa trên reasoning_trace>
-
-##STOP_REASONING##  # Chỉ xuất hiện nếu đã đủ dữ liệu để dừng reasoning
 
 Chỉ trả về đúng định dạng trên, không thêm thông tin khác.
 '''
@@ -133,88 +130,6 @@ GIẢI THÍCH:
 
 Chỉ trả về đúng định dạng trên, không thêm thông tin khác.
 '''
-ANSWER_WITH_SUGGESTION_PROMPT = '''Bạn là trợ lý AI chuyên về chương trình đào tạo đại học.
-Hãy trả lời câu hỏi dưới đây dựa trên thông tin được cung cấp trong phần CONTEXT.
-
-QUESTION:
-{question}
-
-CONTEXT:
-{context}
-
-INSTRUCTIONS (bắt buộc):
-1) Trả lời NGẮN GỌN và RÕ RÀNG bằng tiếng Việt — phần "ANSWER" phải chứa câu trả lời trực tiếp, tối đa 3 câu.
-2) Nếu context KHÔNG ĐỦ thông tin để trả lời, trong phần "ANSWER" hãy ghi rõ: "Không đủ thông tin để trả lời câu hỏi này." và GIẢI THÍCH rõ lý do vì sao không đủ thông tin, chỉ ra cụ thể phần nào còn thiếu hoặc chưa rõ trong context.
-3) Ngay sau phần ANSWER, thêm một phần "GIẢI THÍCH CHI TIẾT" giải thích vì sao câu trả lời như vậy — trình bày chính xác các bước suy luận (step-by-step, chain-of-thought).
-4) Trong phần "GIẢI THÍCH CHI TIẾT", cho biết CĂN CỨ cụ thể từ CONTEXT cho mỗi bước, bằng cách:
-- Trích dẫn chính xác (tối đa 200 ký tự) đoạn văn hoặc dòng hỗ trợ (viết nguyên văn trong ngoặc kép).
-- Ghi chú vị trí/trích nguồn nếu có (ví dụ: header/section hoặc tên file).
-5) CHỈ cung cấp mục "GỢI Ý PHÂN TÍCH/ĐỀ XUẤT BỔ SUNG" nếu context chưa đủ thông tin hoặc câu trả lời chưa đầy đủ — liệt kê các gợi ý, phân tích hoặc đề xuất thông tin cần thiết để trả lời tốt hơn (ví dụ: cần thêm thông tin gì, câu hỏi nên cụ thể hơn ở điểm nào, v.v.). Nếu đã trả lời đầy đủ, KHÔNG cần mục này.
-6) Không đưa thông tin ngoài CONTEXT. Nếu phải suy đoán, đánh dấu rõ là "suy đoán" và nêu cơ sở.
-
-OUTPUT FORMAT (phải đúng định dạng):
-ANSWER:
-<ngắn gọn, rõ ràng hoặc ghi rõ không đủ thông tin và giải thích lý do, phần còn thiếu>
-
-GIẢI THÍCH CHI TIẾT:
-1) Bước 1: ...
-- Căn cứ: "..." (vị trí)
-2) Bước 2: ...
-- Căn cứ: "..." (vị trí)
-...
-Bắt đầu trả lời bây giờ.
-'''
-ANSWER_COMPLETENESS_EVALUATION_PROMPT = '''Bạn là agent đánh giá độ đầy đủ của câu trả lời trong hệ thống hỏi đáp về chương trình đào tạo đại học.
-
-QUESTION (Câu hỏi của người dùng):
-{question}
-
-ANSWER (Câu trả lời hiện tại):
-{answer}
-
-INSTRUCTIONS (bắt buộc):
-1) Đánh giá xem câu trả lời trên đã đầy đủ và chính xác để giải đáp hoàn toàn câu hỏi của người dùng chưa.
-2) Nếu câu trả lời đã đầy đủ, hãy ghi rõ: "Câu trả lời đã đầy đủ."
-3) Nếu câu trả lời chưa đầy đủ, hãy chỉ ra những điểm còn thiếu hoặc chưa rõ ràng, và ĐỀ XUẤT ra một câu hỏi phụ hoặc thông tin cần làm rõ tiếp theo để có thể trả lời tổng hợp tốt hơn.
-4) Không thêm thông tin ngoài nội dung đã cho. Nếu phải suy đoán, đánh dấu rõ là "suy đoán".
-5) Trả lời bằng tiếng Việt.
-
-OUTPUT FORMAT (phải đúng định dạng):
-ĐÁNH GIÁ ĐỘ ĐẦY ĐỦ:
-<đánh giá ngắn gọn về mức độ đầy đủ của câu trả lời>
-
-CÂU HỎI CẦN LÀM RÕ TIẾP THEO:
-- <chỉ đề xuất một câu hỏi phụ hoặc thông tin cần làm rõ; nếu không có thì ghi "Không có">
-
-#LẶP_LẠI_TÌM_KIẾM#: <YES/NO>  # Nếu câu trả lời chưa đầy đủ thì ghi YES, nếu đã đầy đủ thì ghi NO
-
-Bắt đầu đánh giá bây giờ.
-'''
-ANSWER_COMPLETENESS_FINAL_PROMPT = '''
-Bạn là một trợ lý AI. Dưới đây là toàn bộ quá trình suy luận (reasoning_trace) của hệ thống khi trả lời câu hỏi của người dùng. Hãy đọc kỹ các bước, tổng hợp lại các thông tin quan trọng, và tạo ra một câu trả lời cuối cùng đầy đủ, mạch lạc, dễ hiểu cho người dùng. Nếu có nhiều nguồn tham khảo, hãy trích dẫn rõ ràng.
-
-Câu hỏi của người dùng:
-{question}
-
-Reasoning Trace:
-{reasoning_trace}
-
-Yêu cầu:
-
-Đọc kỹ từng bước trong reasoning_trace, chú ý các trường: "question", "answer", "completeness_evaluation", "sources".
-Tổng hợp lại các thông tin quan trọng, loại bỏ các chi tiết lặp lại hoặc không cần thiết.
-Đưa ra câu trả lời cuối cùng cho người dùng, đảm bảo đầy đủ, chính xác, dễ hiểu.
-Nếu có nguồn tham khảo (sources), hãy liệt kê cuối câu trả lời theo định dạng:
-Nguồn 1: ...
-Nguồn 2: ...
-Nếu reasoning_trace cho thấy hệ thống đã phải lặp lại nhiều lần để hoàn thiện câu trả lời, hãy giải thích ngắn gọn lý do.
-Định dạng trả lời:
-
-Trả lời cuối cùng:
-<điền câu trả lời cuối cùng ở đây>
-
-Bạn chỉ cần trả về đúng định dạng trên, không thêm bất kỳ thông tin nào khác.
-'''
 QUESTION_NORMALIZATION_PROMPT = '''Bạn là chuyên gia chuẩn hóa câu hỏi cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM.
 Mục tiêu: Chuyển đổi câu hỏi của người dùng thành phiên bản rõ ràng, đầy đủ ngữ nghĩa, loại bỏ mơ hồ, đảm bảo dễ hiểu và nhất quán.
 
@@ -236,63 +151,6 @@ QUESTION CHUẨN HÓA:
 <ghi lại câu hỏi đã được chuẩn hóa, rõ nghĩa, không lặp lại, không thêm ý ngoài ý định>
 
 Bắt đầu chuẩn hóa câu hỏi bây giờ.
-'''
-PLANNING_PROMPT = '''Bạn là agent lập kế hoạch cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM. Dựa trên câu hỏi và ngữ cảnh dưới đây, hãy liệt kê các truy vấn hoặc hành động cần thực hiện để trả lời đúng nhất.
-USER CHAT HISTORY:
-{user_chat_history}
-QUESTION:
-{question}
-CONTEXT:
-{context}
-INSTRUCTIONS (bắt buộc):
-1) Trả lời NGẮN GỌN và RÕ RÀNG bằng tiếng Việt — phần "KẾ HOẠCH" phải chứa danh sách các bước/truy vấn cần thiết, tối đa 5 bước.
-2) Ngay sau phần KẾ HOẠCH, thêm một phần "GIẢI THÍCH CHI TIẾT" giải thích vì sao lập kế hoạch như vậy — trình bày chính xác các bước suy luận (step-by-step).
-3) Trong phần "GIẢI THÍCH CHI TIẾT", cho biết CĂN CỨ cụ thể từ QUESTION hoặc CONTEXT cho mỗi bước, bằng cách:
-- Trích dẫn chính xác (tối đa 200 ký tự) đoạn văn hoặc dòng hỗ trợ (viết nguyên văn trong ngoặc kép).
-- Ghi chú vị trí/trích nguồn nếu có (ví dụ: header/section hoặc tên file).
-4) Nếu CONTEXT không đủ thông tin để lập kế hoạch, viết rõ: "Tôi không tìm thấy thông tin đủ để lập kế hoạch" và chỉ ra phần thiếu.
-5) Không đưa thông tin ngoài CONTEXT. Nếu phải suy đoán, đánh dấu rõ là "suy đoán" và nêu cơ sở.
-6) Ở cuối, cung cấp mục "NGUỒN THAM KHẢO" liệt kê các header/section trích dẫn trong phần giải thích.
-OUTPUT FORMAT (phải đúng định dạng):
-KẾ HOẠCH:
-[STEP 1]: ...
-[STEP 2]: ...
-[STEP 3]: ...
-... (mỗi bước bắt đầu bằng [STEP n]: để dễ dàng tách bằng regex)
-GIẢI THÍCH CHI TIẾT:
-1) Bước 1: ... 
-- Căn cứ: "..." (vị trí)
-2) Bước 2: ...
-- Căn cứ: "..." (vị trí)
-...
-NGUỒN THAM KHẢO:
-- Header/Section: dòng hoặc tiêu đề trích dẫn
-Bắt đầu lập kế hoạch bây giờ.
-'''
-OBSERVING_PROMPT = '''Bạn là agent quan sát và đánh giá cho hệ thống hỏi đáp tự động về chương trình đào tạo của trường Đại học Giao thông Vận tải TP.HCM. Dựa trên kết quả truy xuất, hãy đánh giá độ phù hợp và đề xuất điều chỉnh nếu cần.
-RESULTS: {results}
-INSTRUCTIONS (bắt buộc):
-1) Trả lời NGẮN GỌN và RÕ RÀNG bằng tiếng Việt — phần "QUAN SÁT" phải chứa đánh giá và đề xuất điều chỉnh, tối đa 3 điểm.
-2) Ngay sau phần QUAN SÁT, thêm một phần "GIẢI THÍCH CHI TIẾT" giải thích vì sao quan sát như vậy — trình bày chính xác các bước suy luận (step-by-step).
-3) Trong phần "GIẢI THÍCH CHI TIẾT", cho biết CĂN CỨ cụ thể từ RESULTS cho mỗi bước, bằng cách:
-- Trích dẫn chính xác (tối đa 200 ký tự) đoạn văn hoặc dòng hỗ trợ (viết nguyên văn trong ngoặc kép).
-- Ghi chú vị trí/trích nguồn nếu có (ví dụ: header/section hoặc tên file).
-4) Nếu RESULTS không đủ thông tin để quan sát, viết rõ: "Tôi không tìm thấy thông tin đủ để quan sát" và chỉ ra phần thiếu.
-5) Không đưa thông tin ngoài RESULTS. Nếu phải suy đoán, đánh dấu rõ là "suy đoán" và nêu cơ sở.
-6) Ở cuối, cung cấp mục "NGUỒN THAM KHẢO" liệt kê các header/section trích dẫn trong phần giải thích.
-OUTPUT FORMAT (phải đúng định dạng):
-QUAN SÁT:
-1) ...
-2) ...
-GIẢI THÍCH CHI TIẾT:
-1) Bước 1: ... 
-- Căn cứ: "..." (vị trí)
-2) Bước 2: ...
-- Căn cứ: "..." (vị trí)
-...
-NGUỒN THAM KHẢO:
-- Header/Section: dòng hoặc tiêu đề trích dẫn
-Bắt đầu quan sát bây giờ.
 '''
 QA_VIET_UNI_PROMPT = '''Bạn là trợ lý trí tuệ nhân tạo chuyên về các chương trình đào tạo đại học.
 Hãy trả lời câu hỏi dưới đây dựa trên thông tin được cung cấp trong phần CONTEXT và lịch sử hội thoại trước đó của người dùng.
@@ -321,52 +179,3 @@ NGUỒN THAM KHẢO:
 - Header/Section: dòng hoặc tiêu đề trích dẫn
 Bắt đầu trả lời bây giờ.
 '''
-
-PROMPT_TEMPLATES = {
-    "question_normalization": {
-        "template": QUESTION_NORMALIZATION_PROMPT,
-        "fields": ["question"]
-    },
-    # "next_query_suggestion": {
-    #     "template": NEXT_QUERY_SUGGESTION_PROMPT,
-    #     "fields": ["question", "context", "reasoning_trace"]
-    # },
-    # "answer": {
-    #     "template": ANSWER_WITH_SUGGESTION_PROMPT,
-    #     "fields": ["question", "context"]
-    # },
-    # "answer_completeness_evaluation": {
-    #     "template": ANSWER_COMPLETENESS_EVALUATION_PROMPT,
-    #     "fields": ["question", "answer"]
-    # },
-    # "answer_completeness_final": {
-    #     "template": ANSWER_COMPLETENESS_FINAL_PROMPT,
-    #     "fields": ["question", "reasoning_trace"]
-    # },
-    # "planning": {
-    #     "template": PLANNING_PROMPT,
-    #     "fields": ["question", "context"]
-    # },
-    # "observing": {
-    #     "template": OBSERVING_PROMPT,
-    #     "fields": ["results"]
-    # },
-    "qa": {
-        "template": QA_VIET_UNI_PROMPT,
-        "fields": ["question", "context"]
-    },
-    "question_classification_and_agentic_strategy": {
-        "template": QUESTION_CLASSIFICATION_AND_AGENTIC_STRATEGY_PROMPT,
-        "fields": ["question"]
-    },
-    # "final_answer_from_reasoning_trace": {
-    #     "template": FINAL_ANSWER_FROM_REASONING_TRACE_PROMPT,
-    #     "fields": ["question", "reasoning_trace"]
-    # }
-}
-
-def render_prompt(template: str, fields: list, values: dict):
-    missing = [f for f in fields if f not in values]
-    if missing:
-        raise ValueError(f"Missing fields: {missing}")
-    return template.format(**values)
