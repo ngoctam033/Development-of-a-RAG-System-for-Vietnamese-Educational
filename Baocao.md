@@ -110,7 +110,7 @@
 - Một số LLM tiêu biểu: GPT, Gemini, Llama, v.v.
 ### 1.3. Kỹ thuật Retrieval-Augmented Generation (RAG) *(~2 trang)*
 - Định nghĩa, nguyên lý hoạt động, các thành phần chính: Retriever, Generator.
-- Ưu nhược điểm của RAG truyền thống.
+- Quy trình hoạt động của RAG
 - Ứng dụng thực tiễn của RAG.
 ### 1.4. Tại sao LLM cần kết hợp với RAG? *(~1 trang)*
 - Hạn chế của LLM: hiện tượng "ảo giác" (hallucination), thiếu cập nhật dữ liệu mới, không thể truy xuất nguồn gốc thông tin.
@@ -354,50 +354,126 @@
 
 ### 4.1. Thiết kế thí nghiệm *(~2 trang)*
 
-#### 4.1.1. Bộ dữ liệu (Dataset) tài liệu giáo dục *(~0.7 trang)*
-- Mô tả dataset (nguồn, số lượng, cấu trúc).
-- Xây dựng bộ câu hỏi đánh giá (Benchmark Q&A).
+#### 4.1.1. Bộ dữ liệu (Dataset) tài liệu giáo dục *(~1 trang)*
+- Mô tả dataset: nguồn gốc (chương trình đào tạo Trường Đại học Giao thông Vận tải TP.HCM), số lượng tài liệu, cấu trúc phân cấp.
+- Thống kê về kích thước corpus: số trang PDF, số chunk sau xử lý, phân bố theo chương/mục.
+- Đặc điểm của tài liệu: độ phức tạp về cấu trúc (bảng biểu, danh sách, phân cấp), ngôn ngữ chuyên ngành tiếng Việt.
+- Xây dựng bộ câu hỏi thử nghiệm (Test Questions): Phân loại theo độ phức tạp (Simple Lookup, Comparative, Analytical), bao phủ các chủ đề chính trong tài liệu.
 
-#### 4.1.2. Các mô hình so sánh (Baselines) *(~0.7 trang)*
-- Baseline: RAG truyền thống (single-shot) (Hiện thực hóa ở Chương 2).
-- Mô hình đề xuất: Agentic RAG (Hiện thực hóa ở Chương 3).
+#### 4.1.2. Các mô hình so sánh *(~0.5 trang)*
+- **Baseline:** Hệ thống RAG truyền thống (single-shot retrieval, hiện thực hóa ở Chương 2).
+- **Mô hình đề xuất:** Agentic RAG (iterative reasoning, hiện thực hóa ở Chương 3).
+- Mục tiêu so sánh: Khả năng trả lời câu hỏi phức tạp, độ chính xác, khả năng trích dẫn nguồn, và trải nghiệm người dùng.
 
-#### 4.1.3. Các chỉ số đánh giá (Metrics) *(~0.6 trang)*
-- Retrieval Metrics: Precision@K, Recall@K, MRR (Mean Reciprocal Rank), NDCG.
-- Generation Metrics: BLEU, ROUGE, BERTScore, và Human evaluation (relevance, accuracy, completeness, faithfulness).
-- Agentic Metrics: Số vòng lặp trung bình, Stop decision accuracy, Reasoning quality, Query refinement quality.
-- End-to-end Metrics: Answer correctness, Citation accuracy, User satisfaction.
+#### 4.1.3. Thiết lập thí nghiệm *(~0.5 trang)*
+- **Môi trường thử nghiệm:** Cấu hình phần cứng (CPU, RAM, GPU nếu có), phần mềm (Python version, thư viện chính).
+- **Cấu hình tham số:** Số lượng chunk truy xuất (K), số vòng lặp tối đa trong Agentic RAG, ngưỡng dừng (stopping criteria).
+- **Kịch bản thử nghiệm:** Các loại câu hỏi đại diện (tra cứu đơn giản, so sánh, tổng hợp, phân tích), test cases thực tế từ sinh viên và giảng viên.
+- **Phương pháp đánh giá:** Phân tích định tính (so sánh trực tiếp output), case studies chi tiết, và đánh giá thủ công về tính chính xác, đầy đủ và hữu ích của câu trả lời.
 
-#### 4.1.4. Thiết lập thí nghiệm *(~0.4 trang)*
-- Môi trường thử nghiệm: Hardware, Software requirements.
-- Cấu hình tham số: K value, threshold, iteration limits.
-- Reproducibility: Random seeds, versioning.
-- Testing scenarios: Simple, Comparative, Analytical questions.
+### 4.2. Kết quả thí nghiệm và Phân tích *(~5-6 trang)*
 
-### 4.2. Kết quả thí nghiệm và Phân tích *(~3-4 trang)*
+#### 4.2.1. Phân tích kết quả truy xuất (Retrieval Performance) *(~1-1.5 trang)*
+- **So sánh trực quan:** Trình bày các ví dụ cụ thể về kết quả truy xuất của hai hệ thống với cùng một câu hỏi.
+- **Chất lượng chunk truy xuất:** Đánh giá mức độ liên quan của các chunk được truy xuất, độ bao phủ thông tin cần thiết.
+- **Ảnh hưởng của metadata filtering:** So sánh trường hợp có và không có metadata filter trong truy xuất.
+- **Phân tích điểm mạnh/yếu:** Baseline thường truy xuất được thông tin cơ bản nhưng thiếu ngữ cảnh, trong khi Agentic RAG có khả năng bổ sung thông tin qua nhiều vòng lặp.
+- **Bảng so sánh:** Tổng hợp số lượng chunk liên quan/không liên quan được truy xuất trong từng trường hợp thử nghiệm điển hình.
 
-#### 4.2.1. Phân tích kết quả truy xuất (Retrieval Performance) *(~1 trang)*
-- Trình bày kết quả (bảng, biểu đồ) so sánh các metrics truy xuất.
+#### 4.2.2. Phân tích chất lượng sinh câu trả lời (Generation Quality) *(~1.5-2 trang)*
+- **So sánh trực tiếp output:** Trình bày song song câu trả lời của RAG truyền thống và Agentic RAG cho cùng một câu hỏi.
+- **Đánh giá định tính:**
+    - **Tính chính xác (Accuracy):** Câu trả lời có đúng sự thật, khớp với tài liệu gốc không?
+    - **Tính đầy đủ (Completeness):** Câu trả lời có bao phủ đủ các khía cạnh của câu hỏi không?
+    - **Tính trung thực (Faithfulness):** Câu trả lời có dựa vào context hay tự suy diễn (hallucination)?
+    - **Khả năng trích dẫn (Citation):** Hệ thống có cung cấp nguồn gốc thông tin rõ ràng không?
+- **Phân loại theo độ phức tạp câu hỏi:** So sánh hiệu quả của hai hệ thống trên các loại câu hỏi Simple, Comparative, Analytical.
+- **Điểm mạnh của Agentic RAG:** Khả năng tổng hợp thông tin từ nhiều nguồn, reasoning rõ ràng, trả lời đầy đủ hơn cho câu hỏi phức tạp.
+- **Hạn chế còn tồn tại:** Thời gian phản hồi lâu hơn, đôi khi lặp lại thông tin hoặc reasoning không cần thiết.
 
-#### 4.2.2. Phân tích chất lượng sinh câu trả lời (Generation Quality) *(~1 trang)*
-- So sánh điểm số BLEU, ROUGE và đánh giá thủ công.
+#### 4.2.3. Phân tích hiệu quả của Agentic RAG qua Case Studies *(~2-2.5 trang)*
+- **Case Study 1: Câu hỏi tra cứu đơn giản**
+    - Ví dụ: "Số tín chỉ tối thiểu để tốt nghiệp ngành X là bao nhiêu?"
+    - So sánh output của RAG truyền thống và Agentic RAG.
+    - Phân tích: Cả hai đều trả lời đúng, nhưng Agentic RAG có thể bổ sung thêm thông tin liên quan (điều kiện tốt nghiệp, phân bổ tín chỉ theo khối kiến thức).
+    - Reasoning trace của Agentic RAG: minh họa quá trình quyết định (1 vòng lặp, đánh giá đủ thông tin, dừng lại).
 
-#### 4.2.3. Phân tích hiệu quả của Agentic RAG (Case Studies) *(~1 trang)*
-- Trình bày các ví dụ cụ thể (câu hỏi phức tạp, câu hỏi so sánh).
-- Phân tích reasoning trace để so sánh output giữa hai hệ thống.
+- **Case Study 2: Câu hỏi so sánh**
+    - Ví dụ: "So sánh yêu cầu tốt nghiệp giữa ngành Y và ngành Z?"
+    - RAG truyền thống: Có thể chỉ trả lời được một phần hoặc trả lời không đầy đủ do chỉ truy xuất 1 lần.
+    - Agentic RAG: Thực hiện 2 truy vấn con (1 cho ngành Y, 1 cho ngành Z), sau đó tổng hợp so sánh.
+    - Reasoning trace chi tiết: Minh họa từng bước lập kế hoạch, truy vấn, đánh giá và tổng hợp.
+    - Kết luận: Agentic RAG vượt trội trong khả năng xử lý câu hỏi so sánh, cung cấp câu trả lời có cấu trúc và đầy đủ.
+
+- **Case Study 3: Câu hỏi phân tích/tổng hợp**
+    - Ví dụ: "Tổng hợp các môn học tiên quyết của ngành X và giải thích chuỗi phụ thuộc?"
+    - RAG truyền thống: Thường thất bại hoặc chỉ liệt kê một phần thông tin, không giải thích được mối quan hệ.
+    - Agentic RAG: Thực hiện nhiều vòng lặp (truy vấn danh sách môn học, sau đó truy vấn từng môn để lấy thông tin tiên quyết, cuối cùng tổng hợp và giải thích).
+    - Reasoning trace: Minh họa quá trình lập kế hoạch phức tạp, truy vấn lặp, tự đánh giá và bổ sung thông tin.
+    - Kết luận: Agentic RAG cho thấy khả năng suy luận nhiều bước, thích hợp cho các câu hỏi đòi hỏi phân tích sâu.
+
+- **Case Study 4: Câu hỏi có ngữ cảnh (multi-turn conversation)**
+    - Ví dụ: Người dùng hỏi "Điều kiện tốt nghiệp của ngành X?", sau đó hỏi tiếp "Còn ngành Y thì sao?"
+    - RAG truyền thống: Không xử lý được đại từ "còn", có thể trả lời sai hoặc không hiểu câu hỏi.
+    - Agentic RAG: Tích hợp chat history, chuẩn hóa câu hỏi thành "Điều kiện tốt nghiệp của ngành Y?", sau đó trả lời chính xác.
+    - Reasoning trace: Minh họa bước question normalization và cách hệ thống hiểu ngữ cảnh hội thoại.
+    - Kết luận: Agentic RAG hỗ trợ hội thoại nhiều lượt tốt hơn, tăng trải nghiệm người dùng.
 
 #### 4.2.4. Phân tích hiệu năng và chi phí (Efficiency Analysis) *(~1 trang)*
-- Latency analysis (Độ trễ), Token consumption, API cost.
+- **Thời gian phản hồi (Latency):**
+    - So sánh thời gian trung bình của RAG truyền thống (single-shot) và Agentic RAG (iterative).
+    - Phân tích nguyên nhân: Agentic RAG cần nhiều lần gọi LLM và truy xuất vector, dẫn đến độ trễ cao hơn.
+    - Đánh giá trade-off: Chất lượng cao hơn nhưng đổi lại là thời gian chờ lâu hơn.
+- **Tiêu thụ token và chi phí API:**
+    - Thống kê số lượng token sử dụng cho mỗi câu hỏi (input + output).
+    - So sánh chi phí giữa hai hệ thống (Agentic RAG tiêu tốn token nhiều hơn do nhiều lần gọi API).
+    - Đề xuất tối ưu: Caching, giới hạn số vòng lặp, tối ưu prompt để giảm token.
+- **Khả năng mở rộng (Scalability):**
+    - Đánh giá hiệu năng khi tăng kích thước corpus hoặc số lượng câu hỏi đồng thời.
+    - Nhận xét về tính khả thi khi triển khai thực tế (cần cân nhắc giữa chi phí và hiệu quả).
 
-### 4.3. Thảo luận và Phân tích lỗi *(~1-1.5 trang)*
+### 4.3. Thảo luận và Phân tích lỗi *(~2-2.5 trang)*
 
-#### 4.3.1. Ablation Study (Nghiên cứu loại bỏ) *(~0.7 trang)*
-- Ảnh hưởng của question normalization.
-- Ảnh hưởng của classification.
-- Ảnh hưởng của iterative reasoning.
+#### 4.3.1. Ablation Study (Nghiên cứu loại bỏ) *(~1 trang)*
+- **Ảnh hưởng của Question Normalization:**
+    - Thử nghiệm với/không có module chuẩn hóa câu hỏi.
+    - Kết quả: Hệ thống không có normalization thường thất bại với câu hỏi có đại từ hoặc ngữ cảnh mơ hồ.
+    - Kết luận: Question normalization là bước quan trọng để xử lý hội thoại nhiều lượt.
+- **Ảnh hưởng của Question Classification:**
+    - Thử nghiệm với/không có phân loại câu hỏi trước.
+    - Kết quả: Không phân loại dẫn đến agent lựa chọn chiến lược không phù hợp, giảm hiệu quả.
+    - Kết luận: Classification giúp agent lập kế hoạch tốt hơn, tối ưu số vòng lặp cần thiết.
+- **Ảnh hưởng của Iterative Reasoning:**
+    - So sánh Agentic RAG chỉ cho phép 1 vòng lặp (tương đương RAG truyền thống) vs. cho phép tối đa 3 vòng lặp.
+    - Kết quả: Câu hỏi phức tạp (comparative, analytical) chỉ được trả lời đầy đủ khi có nhiều vòng lặp.
+    - Kết luận: Iterative reasoning là yếu tố quyết định khả năng giải quyết câu hỏi phức tạp.
 
-#### 4.3.2. Phân tích các trường hợp thất bại (Error Analysis) *(~0.8 trang)*
-- Phân tích các trường hợp Agent lập kế hoạch sai hoặc Tool trả về thông tin không chính xác.
+#### 4.3.2. Phân tích các trường hợp thất bại (Error Analysis) *(~1-1.5 trang)*
+- **Lỗi từ Agent:**
+    - **Lập kế hoạch sai:** Agent phân loại sai loại câu hỏi hoặc đề xuất truy vấn con không phù hợp.
+        - Ví dụ: Câu hỏi analytical bị phân loại thành simple, dẫn đến chỉ truy xuất 1 lần và trả lời không đủ.
+        - Nguyên nhân: Prompt chưa đủ rõ ràng, LLM hiểu sai ý định.
+        - Giải pháp: Cải thiện prompt classification, bổ sung ví dụ minh họa.
+    - **Vòng lặp không cần thiết:** Agent tiếp tục truy vấn khi đã có đủ thông tin, lãng phí token.
+        - Nguyên nhân: Tiêu chí đánh giá completeness chưa chính xác.
+        - Giải pháp: Tinh chỉnh prompt suggest_next_query, thêm điều kiện dừng sớm.
+- **Lỗi từ Retrieval:**
+    - **Truy xuất không chính xác:** Các chunk trả về không liên quan hoặc thiếu thông tin quan trọng.
+        - Nguyên nhân: Embedding model chưa tối ưu cho tiếng Việt chuyên ngành, hoặc câu hỏi quá mơ hồ.
+        - Giải pháp: Fine-tune embedding model, cải thiện chunking strategy (chunk size, overlap).
+    - **Metadata filtering sai:** Lọc quá chặt hoặc quá lỏng, bỏ sót hoặc trả về quá nhiều chunk không cần thiết.
+        - Giải pháp: Tinh chỉnh logic filter, hỗ trợ fuzzy matching cho tiếng Việt.
+- **Lỗi từ Generation:**
+    - **Hallucination:** LLM tự suy diễn hoặc bịa ra thông tin không có trong context.
+        - Nguyên nhân: Context quá ít hoặc không rõ ràng, LLM dựa vào kiến thức nội tại.
+        - Giải pháp: Cải thiện prompt (nhấn mạnh "chỉ trả lời dựa trên context"), tăng số lượng chunk truy xuất.
+    - **Trả lời thiếu nguồn trích dẫn:** Hệ thống sinh câu trả lời nhưng không gắn sources rõ ràng.
+        - Nguyên nhân: Prompt không yêu cầu citation hoặc parsing sources từ output không chính xác.
+        - Giải pháp: Cập nhật prompt template, cải thiện logic extract sources.
+- **Kết luận:**
+    - Phần lớn lỗi đến từ việc phối hợp giữa các module (agent planning, retrieval, generation).
+    - Cần tối ưu từng bước pipeline và kiểm thử kỹ lưỡng với nhiều kịch bản khác nhau.
+    - Hệ thống Agentic RAG tuy mạnh hơn nhưng cũng phức tạp hơn, yêu cầu tuning cẩn thận để đạt hiệu quả tối ưu.
 
 ---
 
