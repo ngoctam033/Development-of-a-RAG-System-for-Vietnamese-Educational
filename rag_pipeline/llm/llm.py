@@ -185,8 +185,10 @@ class GeminiGenerator:
             result["explanation"] = explain_match.group(1).strip()
         if sources_match:
             # Tách từng dòng nguồn tham khảo
-            # sources = [line.strip('- ').strip() for line in sources_match.group(1).strip().split('\n') if line.strip()]
+            sources = [line.strip('- ').strip() for line in sources_match.group(1).strip().split('\n') if line.strip()]
             # result["sources"] = sources
+            # in ra sources để debug
+            logger.debug(f"Sources extracted: {sources}")
             pass
         return result
 

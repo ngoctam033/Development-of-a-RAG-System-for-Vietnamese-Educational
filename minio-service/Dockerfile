@@ -14,10 +14,10 @@ CMD ["/bin/sh", "-c", " \
     done ; \
     \
     # 2. Tạo Bucket chỉ khi alias đã thiết lập thành công
-    if /opt/bitnami/minio-client/bin/mc mb local/${BUCKET_NAME}; then \
-        echo 'Khởi tạo hoàn tất. Bucket đã được tạo: ${BUCKET_NAME}' ; \
+    if /opt/bitnami/minio-client/bin/mc mb --ignore-existing local/${BUCKET_NAME}; then \
+        echo \"Khởi tạo hoàn tất. Bucket đã được tạo: ${BUCKET_NAME}\" ; \
     else \
-        echo '❌ Lỗi: Không thể tạo bucket ${BUCKET_NAME}. Vui lòng kiểm tra cấu hình và thử lại.' ; \
+        echo \"❌ Lỗi: Không thể tạo bucket ${BUCKET_NAME}. Vui lòng kiểm tra cấu hình và thử lại.\" ; \
         /opt/bitnami/minio-client/bin/mc ls local || echo '❌ Lỗi: Không thể liệt kê các bucket. Kiểm tra kết nối MinIO.' ; \
         exit 1 ; \
     fi ; \
