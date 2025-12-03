@@ -6,6 +6,8 @@ from config.prompt_templates import (
     FINAL_ANSWER_FROM_REASONING_TRACE_PROMPT
 )
 
+from utils.logger import logger
+
 PROMPT_TEMPLATES = {
     "question_normalization": {
         "template": QUESTION_NORMALIZATION_PROMPT,
@@ -33,4 +35,6 @@ def render_prompt(template: str, fields: list, values: dict):
     missing = [f for f in fields if f not in values]
     if missing:
         raise ValueError(f"Missing fields: {missing}")
-    return template.format(**values)
+    prompt = template.format(**values)
+    logger.info(f"{prompt}")
+    return prompt
