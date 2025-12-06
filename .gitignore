@@ -1,25 +1,9 @@
-airflow-service/config/airflow.cfg
-airflow-service/logs/
 ./__pycache__/
 *.pyc
 *.pyo
 .venv/
 logs/
-data/processed/all_chunks_combined.json
-data/processed/Phu luc 3b_Mau CTDT thong thuong KM22_chunks.json
-data/vector_store/vectorized_data.pkl
-data/vector_store/vectorized_metadata.json
 .env
 .models/
-open-webui/.open-webui/
-all_chunks_combined.json
-data/processed/Phu luc 3b_Mau CTDT thong thuong KM22.md
-data/raw/Phu luc 3b_Mau CTDT thong thuong KM22.pdf
-Phu luc 3b_Mau CTDT thong thuong KM22_chunks.json
-Phu luc 3b_Mau CTDT thong thuong KM22.md
-Plan.txt
-data/processed/2021-Quyet dinh ban hanh Quy che dao tao tin chi theo thong thu 08_chunks.json
-data/processed/2021-Quyet dinh ban hanh Quy che dao tao tin chi theo thong thu 08.md
-data/raw/2021-Quyet dinh ban hanh Quy che dao tao tin chi theo thong thu 08.pdf
-data/raw/CNTT 2020_2021_Cong nghe thong tin -16072021 FINAL.pdf
-data/raw/CTDT-2022-He-CLC-Logistics-va-Quan-ly-chuoi-cung-ung-Updated-17-10-2022.pdf
+data/
+data_test.txt
