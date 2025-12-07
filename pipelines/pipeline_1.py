@@ -4,7 +4,7 @@ import json
 from typing import Set
 from ultils.load_vector_store import load_vector_store
 from configs import EMBEDDING_MODEL_NAME
-from sentence_transformers import SentenceTransformer
+from sentence_transformers import SentenceTransformer, util
 from ultils.logger import logger
 import numpy as np
 import faiss
@@ -17,19 +17,6 @@ def tokenize(text: str) -> Set[str]:
     Tách từ, chuyển về chữ thường, loại bỏ ký tự đặc biệt.
     """
     return set(word.strip('.,;:!?()[]{}"\'').lower() for word in text.split())
-def get_header_paths_from_json(json_path: str) -> List[str]:
-    """
-    Đọc danh sách header_path từ file json.
-    """
-    with open(json_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    header_paths = []
-    for item in data:
-        meta = item.get("metadata", {})
-        header = meta.get("header_path")
-        if header:
-            header_paths.append(header)
-    return header_paths
 
 def filter_by_header_path(question, relevant_chunks):
     """
@@ -61,14 +48,7 @@ def filter_by_header_path(question, relevant_chunks):
         # 5. QUAN TRỌNG: Lưu điểm số vào chunk
         chunk["similarity_score"]["header_path"] = round(similarity, 4)
 
-    # 6. Sắp xếp danh sách dựa trên điểm số vừa lưu
-    sorted_chunks = sorted(
-        relevant_chunks, 
-        key=lambda x: x["similarity_score"]["header_path"], 
-        reverse=True
-    )
-
-    return sorted_chunks
+    return relevant_chunks
 
 def faiss_retrieve_top_k(
     query: str,
@@ -86,7 +66,7 @@ def faiss_retrieve_top_k(
         List[Dict]: Danh sách các chunk tương đồng nhất kèm điểm số.
     """
 
-    TOP_K = 10
+    TOP_K = len(vectorized_data)
 
     corpus_embeddings = np.array([item["embedding"] for item in vectorized_data], dtype='float32')
 
@@ -124,6 +104,63 @@ def faiss_retrieve_top_k(
         results.append(chunk)
 
     return results
+def filter_document_name(question: str, relevant_chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Xác định mức độ liên quan của câu hỏi đối với các nhóm tài liệu (Header/Context).
+    In ra tài liệu/nhãn có điểm số cao nhất.
+    """
+    if not relevant_chunks:
+        return []
+
+    model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+
+    # 1. Lấy danh sách Unique Root Headers
+    unique_headers = set()
+    for chunk in relevant_chunks:
+        header = chunk.get("metadata", {}).get("header_path", "")
+        if header:
+            # Tách chuỗi theo " > " và lấy phần tử đầu tiên
+            root_header = header.split(" > ")[0].strip()
+            if root_header:
+                unique_headers.add(root_header)
+    
+    unique_headers_list = list(unique_headers)
+    
+    if not unique_headers_list:
+        return relevant_chunks
+
+    # 2. Encode Headers và Question
+    header_embeddings = model.encode(unique_headers_list, convert_to_tensor=True)
+    question_embedding = model.encode(question, convert_to_tensor=True)
+
+    # 3. Tính Cosine Similarity
+    cos_scores = util.cos_sim(question_embedding, header_embeddings)[0]
+
+    # 4. Tạo Map và Tìm Max Score
+    header_score_map = {}
+    best_score = -1.0
+
+    for idx, header in enumerate(unique_headers_list):
+        score = float(cos_scores[idx])
+        header_score_map[header] = score
+        
+        # Kiểm tra xem đây có phải là điểm cao nhất không
+        if score > best_score:
+            best_score = score
+    # 5. Lọc (Filter) và Cập nhật điểm số
+    filtered_chunks = []
+    
+    for chunk in relevant_chunks:
+        
+        # --- CẬP NHẬT ĐIỂM SỐ ---
+
+        # Lưu điểm document score vào chunk
+        chunk["similarity_score"]["document_score"] = round(best_score, 4)
+        
+        # Giữ lại chunk này
+        filtered_chunks.append(chunk)
+    
+    return filtered_chunks
 
 def run(question: str):
     logger.info("Question: {}".format(question))
@@ -132,16 +169,20 @@ def run(question: str):
     for chunk in chunk_relevant:
         chunk["total_similarity_score"] = 0.0
         chunk["similarity_score"] = {
-            "header_path": 0.0
+            "document_score": 0.0,
+            "header_path": 0.0,
+            "retrieve": 0.0
         }
-    # step_1: filter header path
-    chunk_relevant = filter_by_header_path(question, chunk_relevant)[:10]
-    # step_2: faiss retrieve top k
+    # layer_1: xác định tên tài liệu chứa chunk liên quan dựa vào phần từ đầu tiên của header_path, sử dụng cosine similarity
+    chunk_relevant = filter_document_name(question, chunk_relevant)
+    # layer_2: xác định mức độ liên quan của chunk dựa vào full header_path, sử dụng cosine similarity
+    chunk_relevant = filter_by_header_path(question, chunk_relevant)
+    # layer_3: dùng vector search để tìm các chunk liên quan nhất, sử dụng faiss và cosine similarity
     chunk_relevant = faiss_retrieve_top_k(question, chunk_relevant)
-    # In kết quả sau cùng
     for chunk in chunk_relevant:
         clean_chunk = {
             "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),
+            "total_similarity_score": chunk.get("total_similarity_score", 0.0),
             "similarity_score": chunk.get("similarity_score", {})
         }
         pretty_result = json.dumps(clean_chunk, indent=4, ensure_ascii=False)
