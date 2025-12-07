@@ -6,10 +6,10 @@ import google.generativeai as genai
 from render_prompt import PROMPT_TEMPLATES
 from configs import GeminiApiKeyRotator
 from render_prompt import render_prompt
-from ultils import logger
+from ultils.logger import logger
 import re
 import time
-from pipelines.pipeline_1 import run
+from pipelines import pipeline_1
 
 class GeminiGenerator:
     def __init__(self):
@@ -188,7 +188,7 @@ class GeminiGenerator:
         """
         Truy xuất các tài liệu liên quan và xây dựng context, sources cho pipeline agentic RAG.
         """ 
-        relevant_chunks = run(question)
+        relevant_chunks = pipeline_1.run(question)
         context_parts = []
         sources = []
 
