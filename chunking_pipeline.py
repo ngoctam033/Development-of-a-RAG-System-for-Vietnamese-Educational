@@ -830,6 +830,9 @@ def main() -> None:
     # Analyze chunk statistics
     logger.info(f"\n📊 PHÂN TÍCH THỐNG KÊ CHUNKS:")
     stats = analyze_chunk_statistics(all_chunks)
+    # đánh số thứ tự cho chunk để dễ theo dõi
+    for i, chunk in enumerate(all_chunks):
+        chunk["metadata"]["chunk_index"] = i
     
     # Save combined chunks for backup and analysis
     all_chunks_path = os.path.join(PROCESSING_DATA_FOLDER_PATH, "all_chunks_combined.json")
