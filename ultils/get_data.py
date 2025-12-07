@@ -26,9 +26,9 @@ def get_questions_from_file(file_path="data_test.csv"):
             reader = csv.DictReader(file)
             # Đọc từng dòng và thêm vào danh sách
             questions_list = [
-                {"question": row["question"], "true_churn": int(row["true_churn"])}
+                {"question": row["question"], "correct_chunk_id": int(row["correct_chunk_id"])}
                 for row in reader
-                if row.get("question") and row.get("true_churn")
+                if row.get("question") and row.get("correct_chunk_id")
             ]
             
         return questions_list
