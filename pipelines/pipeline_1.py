@@ -140,6 +140,10 @@ def run(question: str):
     chunk_relevant = faiss_retrieve_top_k(question, chunk_relevant)
     # In kết quả sau cùng
     for chunk in chunk_relevant:
-        clean_chunk = {k: v for k, v in chunk.items() if k not in ["embedding", "metadata"]}
+        clean_chunk = {
+            "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),
+            "similarity_score": chunk.get("similarity_score", {})
+        }
         pretty_result = json.dumps(clean_chunk, indent=4, ensure_ascii=False)
         logger.info(pretty_result)
+    return chunk_relevant
