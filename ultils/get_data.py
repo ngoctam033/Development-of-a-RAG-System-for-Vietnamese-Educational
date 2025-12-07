@@ -1,14 +1,17 @@
 import os
-def get_questions_from_file(file_path="data_test.txt"):
+import csv
+
+def get_questions_from_file(file_path="data_test.csv"):
     """
-    Đọc file txt, tách từng dòng, loại bỏ khoảng trắng thừa 
-    và trả về danh sách các câu hỏi.
+    Đọc file CSV, lấy các cột 'question' và 'true_churn',
+    và trả về danh sách các dictionary.
     
     Args:
         file_path (str): Đường dẫn tới file cần đọc.
         
     Returns:
-        list: Danh sách các câu hỏi (string). Trả về list rỗng nếu lỗi hoặc file trống.
+        list: Danh sách các dictionary với keys 'question' và 'true_churn'.
+              Trả về list rỗng nếu lỗi hoặc file trống.
     """
     questions_list = []
 
@@ -18,10 +21,15 @@ def get_questions_from_file(file_path="data_test.txt"):
         return []
 
     try:
-        # Mở file với encoding='utf-8' để hỗ trợ tiếng Việt
+        # Mở file CSV với encoding='utf-8' để hỗ trợ tiếng Việt
         with open(file_path, 'r', encoding='utf-8') as file:
-            # List comprehension: đọc dòng, strip() và chỉ lấy dòng có nội dung
-            questions_list = [line.strip() for line in file if line.strip()]
+            reader = csv.DictReader(file)
+            # Đọc từng dòng và thêm vào danh sách
+            questions_list = [
+                {"question": row["question"], "true_churn": int(row["true_churn"])}
+                for row in reader
+                if row.get("question") and row.get("true_churn")
+            ]
             
         return questions_list
 
