@@ -1,12 +1,12 @@
 
 from typing import List, Dict
-from llm import GeminiGenerator
+from llm import LLMlocalGenerator
 from ultils.logger import logger
 import json
 import copy
 from typing import Any
 
-class AgenticGeminiRAG(GeminiGenerator):
+class AgenticGeminiRAG(LLMlocalGenerator):
     def __init__(self):
         """
         Initialize the Agentic Gemini RAG generator
@@ -77,14 +77,14 @@ class AgenticGeminiRAG(GeminiGenerator):
         Run full agentic RAG pipeline
         Returns a dict with all intermediate results and the full reasoning trace
         """
-        normalized_question = ""
+        normalized_question = question
         answer = ""
         all_sources = []
         reasoning_trace = {}
         # Step 1: Question Normalization
-        normalized_question = self.normalize_question(
-            question, user_chat_history
-        )
+        # normalized_question = self.normalize_question(
+        #     question, user_chat_history
+        # )
         reasoning_trace["question_normalization"] = {
             "input_question": question,
             "normalized_question": normalized_question

@@ -18,7 +18,7 @@ def tokenize(text: str) -> Set[str]:
     """
     return set(word.strip('.,;:!?()[]{}"\'').lower() for word in text.split())
 
-def filter_by_header_path(question, relevant_chunks):
+def filter_by_full_header_path(question, relevant_chunks):
     """
     Tính điểm tương đồng giữa câu hỏi và header_path của chunk bằng Jaccard Similarity.
     Trả về 10 chunk có điểm số cao nhất.
@@ -33,6 +33,12 @@ def filter_by_header_path(question, relevant_chunks):
         
         # 2. Tokenize header_path
         header_tokens = tokenize(header_path)
+        # Danh sách stopwords tiếng Việt cơ bản (cần bổ sung thêm)
+        stopwords = {'là', 'của', 'những', 'các', 'về', 'trong', 'tôi', 'muốn', 'hỏi', 'gì', 'như', 'nào', '*', '>'}
+        
+        # Lọc bỏ stopwords để chỉ giữ lại từ khóa quan trọng (keywords)
+        question_tokens = {w for w in question_tokens if w not in stopwords}
+        header_tokens = {w for w in header_tokens if w not in stopwords}
         
         # 3. Tính Jaccard Similarity: Intersection / Union
         intersection = question_tokens & header_tokens
@@ -46,7 +52,7 @@ def filter_by_header_path(question, relevant_chunks):
             chunk["similarity_score"] = {}
             
         # 5. QUAN TRỌNG: Lưu điểm số vào chunk
-        chunk["similarity_score"]["header_path"] = round(similarity, 4)
+        chunk["similarity_score"]["full_header_path"] = round(similarity, 4)
 
     return relevant_chunks
 
@@ -104,7 +110,7 @@ def faiss_retrieve_top_k(
         results.append(chunk)
 
     return results
-def filter_document_name(question: str, relevant_chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def filter_header_path0(question: str, relevant_chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Xác định mức độ liên quan của câu hỏi đối với các nhóm tài liệu (Header/Context).
     In ra tài liệu/nhãn có điểm số cao nhất.
@@ -147,18 +153,27 @@ def filter_document_name(question: str, relevant_chunks: List[Dict[str, Any]]) -
         # Kiểm tra xem đây có phải là điểm cao nhất không
         if score > best_score:
             best_score = score
+            best_header = header
     # 5. Lọc (Filter) và Cập nhật điểm số
     filtered_chunks = []
     
     for chunk in relevant_chunks:
+        # Lấy root header của chunk hiện tại để so sánh
+        header = chunk.get("metadata", {}).get("header_path", "")
+        current_root = ""
+        if header:
+             current_root = header.split(" > ")[0].strip()
         
-        # --- CẬP NHẬT ĐIỂM SỐ ---
+        # CHỈ GIỮ LẠI CÁC CHUNK THUỘC VỀ BEST HEADER
+        if current_root == best_header:
+            
+             # --- CẬP NHẬT ĐIỂM SỐ ---
 
-        # Lưu điểm document score vào chunk
-        chunk["similarity_score"]["document_score"] = round(best_score, 4)
-        
-        # Giữ lại chunk này
-        filtered_chunks.append(chunk)
+        #     # Lưu điểm document score vào chunk
+            chunk["similarity_score"]["header_path_0"] = round(best_score, 4)
+            
+             # Giữ lại chunk này
+            filtered_chunks.append(chunk)
     
     return filtered_chunks
 
@@ -169,16 +184,29 @@ def run(question: str):
     for chunk in chunk_relevant:
         chunk["total_similarity_score"] = 0.0
         chunk["similarity_score"] = {
-            "document_score": 0.0,
-            "header_path": 0.0,
+            "header_path_0": 0.0,
+            "full_header_path": 0.0,
             "retrieve": 0.0
         }
     # layer_1: xác định tên tài liệu chứa chunk liên quan dựa vào phần từ đầu tiên của header_path, sử dụng cosine similarity
-    chunk_relevant = filter_document_name(question, chunk_relevant)
+    chunk_relevant = filter_header_path0(question, chunk_relevant)
     # layer_2: xác định mức độ liên quan của chunk dựa vào full header_path, sử dụng cosine similarity
-    chunk_relevant = filter_by_header_path(question, chunk_relevant)
+    chunk_relevant = filter_by_full_header_path(question, chunk_relevant)
     # layer_3: dùng vector search để tìm các chunk liên quan nhất, sử dụng faiss và cosine similarity
     chunk_relevant = faiss_retrieve_top_k(question, chunk_relevant)
+    # Tính tổng điểm similarity_score cho mỗi chunk
+    for chunk in chunk_relevant:
+        # total_score bằng document_score*0.7 + header_path*0.2 + retrieve*0.1
+        total_score = (
+            chunk["similarity_score"].get("header_path_0", 0.0) * 0.5847 +
+            chunk["similarity_score"].get("full_header_path", 0.0) * 0.2217 +
+            chunk["similarity_score"].get("retrieve", 0.0) * 0.1937
+        )
+        chunk["total_similarity_score"] = round(total_score, 4)
+    # Sắp xếp lại chunk_relevant theo tổng điểm similarity_score từ cao đến thấp
+    chunk_relevant.sort(key=lambda x: x["total_similarity_score"], reverse=True)
+    # trả về top 10 chunk liên quan nhất
+    chunk_relevant = chunk_relevant[:10]
     for chunk in chunk_relevant:
         clean_chunk = {
             "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),

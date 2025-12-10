@@ -6,6 +6,7 @@ import os
 import re
 
 from agentic_rag import answer_question
+from agentic_rag import AgenticGeminiRAG
 # from rag_pipeline.chat_context import context_manager
 # from rag_pipeline.retrieval.vector_store import load_vector_store
 
@@ -22,6 +23,8 @@ def run_qa_interface():
     logger.info("🤖 HỆ THỐNG HỎI ĐÁP CHƯƠNG TRÌNH ĐÀO TẠO")
     logger.info("="*50)
     logger.info("Nhập 'exit' để thoát.\n")
+
+    rag_system = AgenticGeminiRAG()
 
     # user_chat_context = context_manager.ChatContextManager()
     user_chat_context = []
@@ -53,21 +56,26 @@ def run_qa_interface():
         # In ra quá trình xử lý câu hỏi và trả lời
         logger.info("⏳ Đang xử lý câu hỏi...")
         # Get answer from pipeline (functional)
-        result = answer_question(question,user_chat_context)
+        # result = answer_question(question,user_chat_context)
+        result = rag_system.qa_viet_uni(
+                question=question,
+            )
         # Log answer
         logger.info("✅ Câu hỏi đã được xử lý.")
         
         # Display results
         logger.info("\n" + "-"*50)
         logger.info("📝 Câu trả lời:")
-        logger.info("-"*50)
-        logger.info(result["answer"])
-        logger.info("\n" + "-"*50)
-        logger.info("🔍 Nguồn tham khảo:")
-        logger.info("-"*50)
-        logger.info("Reasoning Trace:\n" + json.dumps(result['reasoning_trace'],
-                                                      ensure_ascii=False,
-                                                      indent=2))
+        logger.info(result)
+        # logger.info("📝 Câu trả lời:")
+        # logger.info("-"*50)
+        # logger.info(result["answer"])
+        # logger.info("\n" + "-"*50)
+        # logger.info("🔍 Nguồn tham khảo:")
+        # logger.info("-"*50)
+        # logger.info("Reasoning Trace:\n" + json.dumps(result['reasoning_trace'],
+        #                                               ensure_ascii=False,
+        #                                               indent=2))
         logger.info("-"*50)
 
 if __name__ == "__main__":

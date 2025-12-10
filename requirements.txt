@@ -1,2 +1,6 @@
 faiss-cpu
 sentence-transformers
+optuna
+numpy
+pandas
+dotenv

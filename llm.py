@@ -9,7 +9,8 @@ from render_prompt import render_prompt
 from ultils.logger import logger
 import re
 import time
-from pipelines import pipeline_1
+from pipelines import pipeline_4
+from openai import OpenAI
 
 class GeminiGenerator:
     def __init__(self):
@@ -167,6 +168,7 @@ class GeminiGenerator:
                 "context": context_and_sources["context"],
             }
         )
+        logger.info("Generated prompt for QA_VIET_UNI:\n" + prompt)
         response = self._generate(prompt)
         # Tách các phần theo định dạng OUTPUT FORMAT
         result = {}
@@ -182,13 +184,13 @@ class GeminiGenerator:
             # sources = [line.strip('- ').strip() for line in sources_match.group(1).strip().split('\n') if line.strip()]
             # result["sources"] = sources
             pass
-        return result
+        return response
 
     def build_context_and_sources(self, question, top_k=50):
         """
         Truy xuất các tài liệu liên quan và xây dựng context, sources cho pipeline agentic RAG.
         """ 
-        relevant_chunks = pipeline_1.run(question)
+        relevant_chunks = pipeline_4.run(question)[:10]
         context_parts = []
         sources = []
 
@@ -200,3 +202,42 @@ class GeminiGenerator:
             "context": context,
             "sources": "\n".join(sources)
         }
+    
+class LLMlocalGenerator(GeminiGenerator):
+    def _generate(self, prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
+            """
+            Hàm sinh văn bản sử dụng Local LLM thông qua LM Studio.
+            LM Studio phải đang chạy và bật Local Server (mặc định port 1234).
+            """
+            time.sleep(0.5) 
+            
+            try:
+                client = OpenAI(
+                    base_url="http://localhost:1234/v1", 
+                    api_key="lm-studio"
+                )
+
+                # Lấy danh sách model đang load
+                models = client.models.list()
+                if not models.data:
+                    return "[LỖI LOCAL LLM] Không có model nào được load. Vui lòng load model trong LM Studio trước."
+                
+                # Sử dụng model đầu tiên trong danh sách
+                model_name = models.data[0].id
+                logger.info(f"Sử dụng model: {model_name}")
+
+                response = client.chat.completions.create(
+                    model=model_name,
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=temperature,
+                    max_tokens=max_output_tokens,
+                    top_p=top_p,
+                )
+                
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                logger.error(f"Lỗi kết nối LM Studio: {str(e)}")
+                return f"[LỖI LOCAL LLM] Không thể kết nối tới LM Studio. Đảm bảo server đang chạy tại port 1234. Chi tiết: {str(e)}"

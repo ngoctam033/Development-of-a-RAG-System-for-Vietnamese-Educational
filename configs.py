@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 EMBEDDING_MODEL_NAME = "bkai-foundation-models/vietnamese-bi-encoder"
+CROSS_ENCODER_MODEL_NAME = 'cross-encoder/ms-marco-MiniLM-L-6-v2'
 # sentence-transformers/all-MiniLM-L6-v2
 RAW_DATA_FOLDER_PATH = "data/processed/"
 PROCESSING_DATA_FOLDER_PATH = "data/processed/"
