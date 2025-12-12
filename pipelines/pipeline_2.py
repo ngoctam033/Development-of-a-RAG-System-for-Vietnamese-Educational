@@ -5,6 +5,7 @@ from sentence_transformers import SentenceTransformer, util
 from ultils.logger import logger
 from .pipeline_1 import filter_header_path0, faiss_retrieve_top_k, filter_by_full_header_path, tokenize
 from rank_bm25 import BM25Okapi
+from ultils.log_chunk import log_chunk_details
 
 vector_store = load_vector_store()
 model = SentenceTransformer(EMBEDDING_MODEL_NAME)
@@ -179,12 +180,5 @@ def run(question: str):
         reverse=True
     )
     # In kết quả sau cùng
-    for chunk in sorted_chunks:
-        clean_chunk = {
-            "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),
-            "total_similarity_score": chunk.get("total_similarity_score", 0.0),
-            "similarity_score": chunk.get("similarity_score", {})
-        }
-        pretty_result = json.dumps(clean_chunk, indent=4, ensure_ascii=False)
-        logger.info(pretty_result)
+    log_chunk_details(chunk_relevant)
     return sorted_chunks

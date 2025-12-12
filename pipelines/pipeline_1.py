@@ -8,6 +8,7 @@ from sentence_transformers import SentenceTransformer, util
 from ultils.logger import logger
 import numpy as np
 import faiss
+from ultils.log_chunk import log_chunk_details
 
 vector_store = load_vector_store()
 model = SentenceTransformer(EMBEDDING_MODEL_NAME)
@@ -207,12 +208,5 @@ def run(question: str):
     chunk_relevant.sort(key=lambda x: x["total_similarity_score"], reverse=True)
     # trả về top 10 chunk liên quan nhất
     chunk_relevant = chunk_relevant[:10]
-    for chunk in chunk_relevant:
-        clean_chunk = {
-            "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),
-            "total_similarity_score": chunk.get("total_similarity_score", 0.0),
-            "similarity_score": chunk.get("similarity_score", {})
-        }
-        pretty_result = json.dumps(clean_chunk, indent=4, ensure_ascii=False)
-        logger.info(pretty_result)
+    log_chunk_details(chunk_relevant)
     return chunk_relevant

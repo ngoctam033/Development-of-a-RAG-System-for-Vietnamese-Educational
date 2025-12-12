@@ -1,14 +1,14 @@
 import json
 from ultils.load_vector_store import load_vector_store
 from configs import EMBEDDING_MODEL_NAME
-from sentence_transformers import SentenceTransformer, util
+from sentence_transformers import SentenceTransformer
 from ultils.logger import logger
-from .pipeline_1 import filter_header_path0, faiss_retrieve_top_k, filter_by_full_header_path, tokenize
+from ultils.log_chunk import log_chunk_details
+from .pipeline_1 import filter_header_path0, faiss_retrieve_top_k, tokenize
 from .pipeline_2 import filter_by_full_chunks, calculate_bm25_scores
 
 vector_store = load_vector_store()
 model = SentenceTransformer(EMBEDDING_MODEL_NAME)
-from typing import List, Dict, Any
 
 def filter_by_full_chunk_jaccard_similarity(question, relevant_chunks):
     """
@@ -69,11 +69,6 @@ def run(question: str):
         reverse=True
     )
     chunk_relevant = sorted(
-        filter_by_full_header_path(question, chunk_relevant),
-        key=lambda x: x.get("similarity_score", {}).get("full_header_path", 0.0),
-        reverse=True
-    )
-    chunk_relevant = sorted(
         filter_by_full_chunks(question, chunk_relevant),
         key=lambda x: x.get("similarity_score", {}).get("full_chunks", 0.0),
         reverse=True
@@ -105,13 +100,5 @@ def run(question: str):
         )
         chunk["total_similarity_score"] = round(total_score, 4)
     # In kết quả sau cùng
-    for chunk in chunk_relevant:
-        clean_chunk = {
-            "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),
-            "chunk_index": chunk.get("metadata", {}).get("chunk_index", "N/A"),
-            "total_similarity_score": chunk.get("total_similarity_score", 0.0),
-            "similarity_score": chunk.get("similarity_score", {})
-        }
-        pretty_result = json.dumps(clean_chunk, indent=4, ensure_ascii=False)
-        logger.info(pretty_result)
+    log_chunk_details(chunk_relevant)
     return chunk_relevant

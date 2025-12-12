@@ -1,5 +1,6 @@
 import json
 from ultils.load_vector_store import load_vector_store
+from ultils.log_chunk import log_chunk_details
 from configs import EMBEDDING_MODEL_NAME
 from sentence_transformers import SentenceTransformer, CrossEncoder
 from ultils.logger import logger
@@ -115,13 +116,5 @@ def run(question: str):
         chunk["total_similarity_score"] = round(total_score, 4)
     chunk_relevant = chunk_relevant[:10]
     # In kết quả sau cùng
-    for chunk in chunk_relevant:
-        clean_chunk = {
-            "header_path": chunk.get("metadata", {}).get("header_path", "N/A"),
-            "chunk_index": chunk.get("metadata", {}).get("chunk_index", "N/A"),
-            "total_similarity_score": chunk.get("total_similarity_score", 0.0),
-            "similarity_score": chunk.get("similarity_score", {})
-        }
-        pretty_result = json.dumps(clean_chunk, indent=4, ensure_ascii=False)
-        logger.info(pretty_result)
+    log_chunk_details(chunk_relevant)
     return chunk_relevant
