@@ -1,6 +1,9 @@
 import os
 from dotenv import load_dotenv
 load_dotenv()
+# QUAN TRỌNG: Bật chế độ Offline để tránh lỗi ReadTimeout khi đã có model
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
 EMBEDDING_MODEL_NAME = "bkai-foundation-models/vietnamese-bi-encoder"
 CROSS_ENCODER_MODEL_NAME = 'cross-encoder/ms-marco-MiniLM-L-6-v2'
 # sentence-transformers/all-MiniLM-L6-v2
