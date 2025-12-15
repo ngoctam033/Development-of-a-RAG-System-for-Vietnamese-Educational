@@ -3,14 +3,102 @@ from ultils.load_vector_store import load_vector_store
 from configs import EMBEDDING_MODEL_NAME
 from sentence_transformers import SentenceTransformer, util
 from ultils.logger import logger
-from .pipeline_1 import filter_header_path0, faiss_retrieve_top_k, filter_by_full_header_path, tokenize
+from .pipeline_1 import filter_header_path0, faiss_retrieve_top_k, tokenize
 from rank_bm25 import BM25Okapi
 from ultils.log_chunk import log_chunk_details
 
 vector_store = load_vector_store()
 model = SentenceTransformer(EMBEDDING_MODEL_NAME)
 from typing import List, Dict, Any
+from openai import OpenAI
+def generate(prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
+    """
+    Hàm sinh văn bản sử dụng Local LLM thông qua LM Studio.
+    LM Studio phải đang chạy và bật Local Server (mặc định port 1234).
+    Kết quả trả về sẽ được ép kiểu thành List thông qua JSON parsing.
+    """
+    
+    try:
+        client = OpenAI(
+            base_url="http://localhost:1234/v1", 
+            api_key="lm-studio"
+        )
 
+        # Lấy danh sách model đang load
+        models = client.models.list()
+        if not models.data:
+            logger.error("[LỖI LOCAL LLM] Không có model nào được load. Vui lòng load model trong LM Studio trước.")
+            return []
+        
+        # Sử dụng model đầu tiên trong danh sách
+        model_name = models.data[0].id
+        # logger.info(f"Sử dụng model: {model_name}")
+        # Ép model trả về object có key "keywords" là một danh sách string
+        keyword_extraction_schema = {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "keyword_extraction_response",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "keywords": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "A list of extracted keywords from the text."
+                        }
+                    },
+                    "required": ["keywords"],
+                    "additionalProperties": False
+                }
+            }
+        }
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                # 1. Sửa System Prompt để chuyên về trích xuất từ khóa (Keyword Extraction)
+                {"role": "system", "content": "You are a keyword extraction expert. Your task is to identify and extract the most important keywords, entities, and technical terms from the user's question. Output the result strictly as a JSON object containing a list of strings."},
+                # 2. Sửa User Prompt để rõ ràng nhiệm vụ với input là 'prompt'
+                {"role": "user", "content": f"Extract keywords from the following question: \"{prompt}\""}
+            ],
+            temperature=temperature,
+            max_tokens=max_output_tokens,
+            top_p=top_p,
+            # SỬ DỤNG JSON SCHEMA NHƯ TÀI LIỆU HƯỚNG DẪN
+            response_format=keyword_extraction_schema
+        )
+        
+        content = response.choices[0].message.content
+        
+        # 4. Parse kết quả từ String sang List
+        try:
+            parsed_data = json.loads(content)
+            
+            # Trường hợp A: Kết quả là List trực tiếp
+            if isinstance(parsed_data, list):
+                return parsed_data
+            
+            # Trường hợp B: Kết quả là Dict (thường gặp với json_object mode, VD: {"keywords": [...]})
+            if isinstance(parsed_data, dict):
+                # Tìm value nào là list thì lấy
+                for key, value in parsed_data.items():
+                    if isinstance(value, list):
+                        return value
+                # Nếu không có list, trả về list chứa dict đó
+                return [parsed_data]
+            
+            return [parsed_data]
+            
+        except json.JSONDecodeError:
+            logger.error(f"[LỖI PARSE JSON] Nội dung không phải JSON hợp lệ: {content}")
+            return []
+            
+    except Exception as e:
+        logger.error(f"Lỗi kết nối LM Studio: {str(e)}")
+        return []
+        
 def filter_header_path1(question: str, relevant_chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """
     Xác định mức độ liên quan của câu hỏi đối với các nhóm tài liệu (Header/Context).
@@ -169,7 +257,7 @@ def run(question: str):
     # layer 3: tính điểm BM25 dựa trên nội dung chunk
     chunk_relevant = calculate_bm25_scores(question, chunk_relevant)
     # layer_4: xác định mức độ liên quan của chunk dựa vào full header_path, sử dụng cosine similarity
-    chunk_relevant = filter_by_full_header_path(question, chunk_relevant)
+    # chunk_relevant = filter_by_full_header_path(question, chunk_relevant)
     # layer_5: dùng vector search để tìm các chunk liên quan nhất, sử dụng faiss và cosine similarity
     chunk_relevant = faiss_retrieve_top_k(question, chunk_relevant)
     # layer_6: xác định mức độ liên quan của chunk dựa vào full content của chunk, sử dụng Jaccard Similarity

@@ -9,7 +9,7 @@ from render_prompt import render_prompt
 from ultils.logger import logger
 import re
 import time
-from pipelines import pipeline_4
+from pipelines import pipeline_0, pipeline_4, pipeline_5, pipeline_6
 from openai import OpenAI
 
 class GeminiGenerator:
@@ -24,6 +24,22 @@ class GeminiGenerator:
         self.model = genai.GenerativeModel('gemini-2.0-flash')
 
     def _generate(self, prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
+        time.sleep(10)  # tránh lỗi rate limit
+        try:
+            # Configure Gemini client
+            genai.configure(api_key=self.api_key_rotator.get_next_key())
+            response = self.model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=temperature,
+                    max_output_tokens=max_output_tokens,
+                    top_p=top_p,
+                )
+            )
+            return response.text
+        except Exception as e:
+            return f"[LỖI] {str(e)}"  # Trả về chuỗi lỗi
+    def _generate1(self, prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
         time.sleep(10)  # tránh lỗi rate limit
         try:
             # Configure Gemini client
@@ -78,7 +94,7 @@ class GeminiGenerator:
                 "context": context_and_sources["context"]
             }
         )
-        response = self._generate(prompt)
+        response = self._generate1(prompt)
         # Trích xuất các trường đặc biệt từ response bằng regex không cần tag đóng
         result = {}
         pattern = r"<<([^>]+)>>\s*([\s\S]*?)(?=(<<[^>]+>>|##STOP_REASONING##|$))"
@@ -136,7 +152,7 @@ class GeminiGenerator:
                 "reasoning_trace": context
             }
         )
-        response = self._generate(prompt)
+        response = self._generate1(prompt)
         result = {}
         pattern = r"<<(final_answer|sources|reasoning_explanation)>>\s*([\s\S]*?)<</\1>>"
         matches = re.findall(pattern, response, re.IGNORECASE)
@@ -168,7 +184,6 @@ class GeminiGenerator:
                 "context": context_and_sources["context"],
             }
         )
-        logger.info("Generated prompt for QA_VIET_UNI:\n" + prompt)
         response = self._generate(prompt)
         # Tách các phần theo định dạng OUTPUT FORMAT
         result = {}
@@ -190,7 +205,7 @@ class GeminiGenerator:
         """
         Truy xuất các tài liệu liên quan và xây dựng context, sources cho pipeline agentic RAG.
         """ 
-        relevant_chunks = pipeline_4.run(question)[:10]
+        relevant_chunks = pipeline_6.run(question)[:10]
         context_parts = []
         sources = []
 
@@ -241,3 +256,19 @@ class LLMlocalGenerator(GeminiGenerator):
             except Exception as e:
                 logger.error(f"Lỗi kết nối LM Studio: {str(e)}")
                 return f"[LỖI LOCAL LLM] Không thể kết nối tới LM Studio. Đảm bảo server đang chạy tại port 1234. Chi tiết: {str(e)}"
+    def _generate_1(self, prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
+        time.sleep(10)  # tránh lỗi rate limit
+        try:
+            # Configure Gemini client
+            genai.configure(api_key=self.api_key_rotator.get_next_key())
+            response = self.model.generate_content(
+                prompt,
+                generation_config=genai.types.GenerationConfig(
+                    temperature=temperature,
+                    max_output_tokens=max_output_tokens,
+                    top_p=top_p,
+                )
+            )
+            return response.text
+        except Exception as e:
+            return f"[LỖI] {str(e)}"  # Trả về chuỗi lỗi

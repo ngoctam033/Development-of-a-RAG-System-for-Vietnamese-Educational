@@ -82,9 +82,9 @@ class AgenticGeminiRAG(LLMlocalGenerator):
         all_sources = []
         reasoning_trace = {}
         # Step 1: Question Normalization
-        # normalized_question = self.normalize_question(
-        #     question, user_chat_history
-        # )
+        normalized_question = self.normalize_question(
+            question, user_chat_history
+        )
         reasoning_trace["question_normalization"] = {
             "input_question": question,
             "normalized_question": normalized_question

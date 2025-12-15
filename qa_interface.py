@@ -55,6 +55,7 @@ def run_qa_interface():
 
         # In ra quá trình xử lý câu hỏi và trả lời
         logger.info("⏳ Đang xử lý câu hỏi...")
+        # pipeline_6.run(question)[:10]
         # Get answer from pipeline (functional)
         # result = answer_question(question,user_chat_context)
         result = rag_system.qa_viet_uni(

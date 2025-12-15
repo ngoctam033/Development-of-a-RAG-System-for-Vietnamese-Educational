@@ -1,5 +1,5 @@
 from ultils.get_data import get_questions_from_file
-from pipelines import pipeline_1, pipeline_2
+from pipelines import pipeline_1, pipeline_2, pipeline_5
 from ultils.logger import logger
 import json
 import optuna
@@ -26,7 +26,7 @@ def run_benchmark_1():
                 "correct_chunk_id": question['correct_chunk_id'],
                 "candidates": []
             }   
-            result = pipeline_2.run(question['question'])
+            result = pipeline_5.run(question['question'])
             benchmark_item["candidates"] = result
             bench_mark_data.append(benchmark_item)
             
