@@ -218,3 +218,18 @@ NGUỒN THAM KHẢO:
 - Header/Section: dòng hoặc tiêu đề trích dẫn
 Bắt đầu trả lời bây giờ.
 '''
+QUERY_TO_HEADER_PROMPT = '''# NHIỆM VỤ
+Phân tích câu hỏi người dùng để trích xuất 3 thành phần sau:
+1. **Ngành (Document Name)**: Xác định ngành học liên quan (VD: "Công nghệ thông tin", "Logistics..."). Nếu không rõ, để trống.
+2. **Từ khóa ngữ cảnh (Context Keywords)**: Các từ chỉ vị trí hoặc phân loại (VD: "Học kỳ 1", "Mục tiêu", "Tự chọn").
+3. **Tên nội dung (Content Name)**: Tên cụ thể của môn học hoặc mục cần tìm (VD: "Giải tích 1", "Đại số").
+
+Từ đó, hãy tạo danh sách các chuỗi `header_path` tiềm năng cho việc tìm kiếm.
+Định dạng: `[Ngành] > %[Từ khóa ngữ cảnh]% > %[Tên nội dung]%`
+(Sử dụng dấu `%` làm ký tự đại diện cho các phần không chắc chắn).
+
+# CÂU HỎI CỦA NGƯỜI DÙNG
+"{user_query}"
+
+# KẾT QUẢ (Chỉ xuất JSON list)
+'''

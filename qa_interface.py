@@ -13,7 +13,7 @@ from agentic_rag import AgenticGeminiRAG
 from ultils.logger import logger
 import time
 import json
-
+from pipelines import pipeline_0, pipeline_4, pipeline_5, pipeline_6
 def run_qa_interface():
     """
     Simple command-line interface for Q&A system

@@ -3,7 +3,8 @@ from configs import (
     NEXT_QUERY_SUGGESTION_PROMPT,
     QA_VIET_UNI_PROMPT,
     QUESTION_CLASSIFICATION_AND_AGENTIC_STRATEGY_PROMPT,
-    FINAL_ANSWER_FROM_REASONING_TRACE_PROMPT
+    FINAL_ANSWER_FROM_REASONING_TRACE_PROMPT,
+    QUERY_TO_HEADER_PROMPT
 )
 
 PROMPT_TEMPLATES = {
@@ -26,6 +27,10 @@ PROMPT_TEMPLATES = {
     "final_answer_from_reasoning_trace": {
         "template": FINAL_ANSWER_FROM_REASONING_TRACE_PROMPT,
         "fields": ["question", "reasoning_trace"]
+    },
+    "header_path_generator": {
+        "template": QUERY_TO_HEADER_PROMPT,
+        "fields": ["user_query"]
     }
 }
 
