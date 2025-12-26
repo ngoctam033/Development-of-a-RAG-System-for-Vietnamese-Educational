@@ -91,12 +91,7 @@ def processing_log_folder(folder_path):
     """
     Hàm nhận vào đường dẫn folder và đếm tổng số dòng của tất cả các file trong đó.
     """
-    data = [
-        {
-            "raw": "",
-            "question":""
-        }
-    ]
+    data = []
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         
@@ -104,20 +99,25 @@ def processing_log_folder(folder_path):
             # 1. Lấy các block log từ file
             file_blocks = parse_log_by_separator(file_path)
             
-            # 2. Duyệt qua từng block để xử lý trích xuất thông tin
+            valid_blocks = []
             for item in file_blocks:
-                raw_text = item.get("raw", "")
+                raw_text = item.get("raw")
                 match = re.search(r'Question:\s*(.*)', raw_text)
                 
                 if match:
                     # match.group(1) là phần nội dung nằm trong dấu ngoặc (.*)
                     question_content = match.group(1).strip()
                     item["question"] = question_content
+                # --- LOGIC MỚI: Xác định pipeline_type ---
+                if "[pipeline_6.py:26]" in raw_text:
+                    item["pipeline_type"] = "metadata"
                 else:
-                    item["question"] = "" # Không tìm thấy câu hỏi
+                    item["pipeline_type"] = "base line"
+
                 del item["raw"]
-            # 3. Gộp kết quả vào list tổng
-            data.extend(file_blocks)
+                if item: 
+                    valid_blocks.append(item)
+            data.extend(valid_blocks)          
     return data
 # --- CHẠY CHƯƠNG TRÌNH ---
 def main():
