@@ -76,13 +76,12 @@ def parse_log_by_separator(file_path):
         
     return blocks
 def save_to_csv(data, output_path):
-    """
-    Hàm lưu list[dict] thành file CSV.
-    """
+    # Lấy header từ phần tử đầu tiên
     fieldnames = data[0].keys()
     
-    with open(output_path, 'w', newline='', encoding='utf-8') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+    with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
+        # SỬ DỤNG delimiter='\t' (Tab) thay vì dấu phẩy mặc định
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='\t')
         
         writer.writeheader()
         writer.writerows(data)
@@ -92,6 +91,14 @@ def processing_log_folder(folder_path):
     Hàm nhận vào đường dẫn folder và đếm tổng số dòng của tất cả các file trong đó.
     """
     data = []
+    ground_truth_path = 'dashboard/dim_query_ground_truth.csv'
+
+    if os.path.exists(ground_truth_path):
+        with open(ground_truth_path, mode='r', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+            ground_truth_list = list(reader)
+    else:
+        print(f"Cảnh báo: Không tìm thấy file tại {ground_truth_path}")
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         
@@ -102,6 +109,7 @@ def processing_log_folder(folder_path):
             valid_blocks = []
             for item in file_blocks:
                 raw_text = item.get("raw")
+                item["top_k"] = 10
                 match = re.search(r'Question:\s*(.*)', raw_text)
                 
                 if match:
