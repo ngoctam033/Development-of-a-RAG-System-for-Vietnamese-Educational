@@ -27,7 +27,7 @@ def faiss_retrieve_top_k(
         List[Dict]: Danh sách các chunk tương đồng nhất kèm điểm số.
     """
 
-    TOP_K = len(vectorized_data)
+    TOP_K = 100
 
     corpus_embeddings = np.array([item["embedding"] for item in vectorized_data], dtype='float32')
 

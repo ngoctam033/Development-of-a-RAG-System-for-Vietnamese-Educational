@@ -106,7 +106,7 @@ class AgenticGeminiRAG(LLMlocalGenerator):
             query_result = self.qa_viet_uni(
                 question=query,
             )
-            reasoning_trace[f"tier_{tier}"] = query_result
+            reasoning_trace[f"tier_{tier}"] = {query_result}
             next_query_result = self.suggest_next_query(
                 question=normalized_question,
                 reasoning_trace=copy.deepcopy(reasoning_trace)

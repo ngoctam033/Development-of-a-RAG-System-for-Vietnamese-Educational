@@ -7,6 +7,7 @@ from sentence_transformers import SentenceTransformer, util
 from ultils.logger import logger
 from .pipeline_0 import faiss_retrieve_top_k
 from ultils.log_chunk import log_chunk_details
+from ultils.get_data import extract_header_paths
 
 vector_store = load_vector_store()
 model = SentenceTransformer(EMBEDDING_MODEL_NAME)
@@ -17,7 +18,7 @@ def tokenize(text: str) -> Set[str]:
     """
     return set(word.strip('.,;:!?()[]{}"\'').lower() for word in text.split())
 
-def filter_by_full_header_path(question, relevant_chunks):
+def filter_by_full_header_path_jaccard_similarity(question, relevant_chunks):
     """
     Tính điểm tương đồng giữa câu hỏi và header_path của chunk bằng Jaccard Similarity.
     Trả về 10 chunk có điểm số cao nhất.
@@ -45,13 +46,9 @@ def filter_by_full_header_path(question, relevant_chunks):
         
         # Tránh chia cho 0 nếu union rỗng
         similarity = len(intersection) / len(union) if union else 0.0
-        
-        # 4. QUAN TRỌNG: Khởi tạo dict similarity_score nếu chưa có
-        if "similarity_score" not in chunk:
-            chunk["similarity_score"] = {}
             
         # 5. QUAN TRỌNG: Lưu điểm số vào chunk
-        chunk["similarity_score"]["full_header_path"] = round(similarity, 4)
+        chunk["similarity_score"]["full_header_path_jaccard"] = round(similarity, 4)
 
     return relevant_chunks
 
@@ -136,7 +133,7 @@ def run(question: str):
     # layer_1: xác định tên tài liệu chứa chunk liên quan dựa vào phần từ đầu tiên của header_path, sử dụng cosine similarity
     chunk_relevant = filter_header_path0(question, chunk_relevant)
     # layer_2: xác định mức độ liên quan của chunk dựa vào full header_path, sử dụng cosine similarity
-    chunk_relevant = filter_by_full_header_path(question, chunk_relevant)
+    chunk_relevant = filter_by_full_header_path_jaccard_similarity(question, chunk_relevant)
     # layer_3: dùng vector search để tìm các chunk liên quan nhất, sử dụng faiss và cosine similarity
     chunk_relevant = faiss_retrieve_top_k(question, chunk_relevant)
     # Tính tổng điểm similarity_score cho mỗi chunk

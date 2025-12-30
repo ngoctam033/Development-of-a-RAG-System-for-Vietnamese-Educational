@@ -98,6 +98,81 @@ def generate(prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
     except Exception as e:
         logger.error(f"Lỗi kết nối LM Studio: {str(e)}")
         return []
+def generate1(prompt: str, temperature=0.2, max_output_tokens=4096, top_p=0.95):
+    """
+    Hàm sinh văn bản sử dụng Local LLM thông qua LM Studio.
+    LM Studio phải đang chạy và bật Local Server (mặc định port 1234).
+    Kết quả trả về sẽ được ép kiểu thành List thông qua JSON parsing.
+    """
+    
+    try:
+        client = OpenAI(
+            base_url="http://localhost:1234/v1", 
+            api_key="lm-studio"
+        )
+
+        # Lấy danh sách model đang load
+        models = client.models.list()
+        if not models.data:
+            logger.error("[LỖI LOCAL LLM] Không có model nào được load. Vui lòng load model trong LM Studio trước.")
+            return []
+        system_prompt = {
+            "role": "system",
+            "content": (
+                "You are a specialized Metadata Router for a Vietnamese university RAG system. "
+                "Your task is to translate natural language queries into hierarchical database paths (`header_path`) based on a strict schema provided by the user.\n"
+                "\n"
+                "STRICT OUTPUT RULES:\n"
+                "1. Output ONLY a valid JSON List of strings (e.g., [\"Path A\", \"Path B\"]).\n"
+                "2. Do NOT use Markdown formatting.\n"
+                "3. Do NOT explain your logic. Just return the list.\n"
+                "4. Always strictly follow the allowable 'Root Nodes' and hierarchy levels described in the user prompt."
+            )
+        }
+        # Sử dụng model đầu tiên trong danh sách
+        model_name = models.data[0].id
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                # 1. Sửa System Prompt để chuyên về trích xuất từ khóa (Keyword Extraction)
+                system_prompt,
+                {"role": "user", "content": f"\"{prompt}\""}
+            ],
+            temperature=temperature,
+            max_tokens=max_output_tokens,
+            top_p=top_p,
+            # SỬ DỤNG JSON SCHEMA NHƯ TÀI LIỆU HƯỚNG DẪN
+            # response_format=keyword_extraction_schema
+        )
+        
+        content = response.choices[0].message.content
+        
+        # 4. Parse kết quả từ String sang List
+        try:
+            parsed_data = json.loads(content)
+            
+            # Trường hợp A: Kết quả là List trực tiếp
+            if isinstance(parsed_data, list):
+                return parsed_data
+            
+            # Trường hợp B: Kết quả là Dict (thường gặp với json_object mode, VD: {"keywords": [...]})
+            if isinstance(parsed_data, dict):
+                # Tìm value nào là list thì lấy
+                for key, value in parsed_data.items():
+                    if isinstance(value, list):
+                        return value
+                # Nếu không có list, trả về list chứa dict đó
+                return [parsed_data]
+            
+            return [parsed_data]
+            
+        except json.JSONDecodeError:
+            logger.error(f"[LỖI PARSE JSON] Nội dung không phải JSON hợp lệ: {content}")
+            return []
+            
+    except Exception as e:
+        logger.error(f"Lỗi kết nối LM Studio: {str(e)}")
+        return []
         
 def filter_header_path1(question: str, relevant_chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """

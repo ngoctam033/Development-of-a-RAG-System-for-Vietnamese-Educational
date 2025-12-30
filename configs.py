@@ -4,7 +4,7 @@ load_dotenv()
 # QUAN TRỌNG: Bật chế độ Offline để tránh lỗi ReadTimeout khi đã có model
 os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
-EMBEDDING_MODEL_NAME = "bkai-foundation-models/vietnamese-bi-encoder"
+EMBEDDING_MODEL_NAME = "AITeamVN/Vietnamese_Embedding"
 CROSS_ENCODER_MODEL_NAME = 'cross-encoder/ms-marco-MiniLM-L-6-v2'
 # sentence-transformers/all-MiniLM-L6-v2
 RAW_DATA_FOLDER_PATH = "data/processed/"
@@ -218,18 +218,35 @@ NGUỒN THAM KHẢO:
 - Header/Section: dòng hoặc tiêu đề trích dẫn
 Bắt đầu trả lời bây giờ.
 '''
-QUERY_TO_HEADER_PROMPT = '''# NHIỆM VỤ
-Phân tích câu hỏi người dùng để trích xuất 3 thành phần sau:
-1. **Ngành (Document Name)**: Xác định ngành học liên quan (VD: "Công nghệ thông tin", "Logistics..."). Nếu không rõ, để trống.
-2. **Từ khóa ngữ cảnh (Context Keywords)**: Các từ chỉ vị trí hoặc phân loại (VD: "Học kỳ 1", "Mục tiêu", "Tự chọn").
-3. **Tên nội dung (Content Name)**: Tên cụ thể của môn học hoặc mục cần tìm (VD: "Giải tích 1", "Đại số").
+QUERY_TO_HEADER_PROMPT = '''NHIỆM VỤ
+Bạn là trợ lý AI chuyên tra cứu tài liệu đào tạo. Nhiệm vụ của bạn là xác định chính xác đường dẫn tiêu đề (header_path) chứa thông tin trả lời cho câu hỏi của người dùng, dựa trên cấu trúc cây tiêu đề (Header Tree) thực tế được cung cấp dưới đây.
 
-Từ đó, hãy tạo danh sách các chuỗi `header_path` tiềm năng cho việc tìm kiếm.
-Định dạng: `[Ngành] > %[Từ khóa ngữ cảnh]% > %[Tên nội dung]%`
-(Sử dụng dấu `%` làm ký tự đại diện cho các phần không chắc chắn).
+CẤU TRÚC CÂY TIÊU ĐỀ (YAML Rút gọn từ dữ liệu tìm kiếm):
+--- BẮT ĐẦU YAML ---
+{tree_header_path}
+--- KẾT THÚC YAML ---
 
-# CÂU HỎI CỦA NGƯỜI DÙNG
+CÂU HỎI CỦA NGƯỜI DÙNG:
 "{user_query}"
 
-# KẾT QUẢ (Chỉ xuất JSON list)
+HƯỚNG DẪN:
+1. Phân tích câu hỏi để tìm các thực thể chính (Tên ngành, Tên môn học, Loại quy chế, Học kỳ...).
+2. Tra cứu trong "CẤU TRÚC CÂY TIÊU ĐỀ" bên trên để tìm nhánh cây khớp nhất với các thực thể đó.
+3. Tái tạo lại đường dẫn đầy đủ từ gốc (Root) đến ngọn (Leaf). Sử dụng dấu " > " để phân cách các cấp.
+4. Nếu câu hỏi mơ hồ, hãy đề xuất các đường dẫn khả thi nhất tìm thấy trong cây.
+5. Nếu không tìm thấy thông tin trong cây, hãy trả về danh sách rỗng hoặc dùng ký tự đại diện "%" nếu bạn đoán được phần cha.
+
+VÍ DỤ MINH HỌA:
+Context (YAML):
+Công nghệ thông tin:
+  III. CHƯƠNG TRÌNH CHI TIẾT:
+    1. Kiến thức khoa học cơ bản:
+      Giải tích 1
+
+User: "Môn giải tích 1 ngành CNTT?"
+Output: [
+  "Công nghệ thông tin > III. CHƯƠNG TRÌNH CHI TIẾT > 1. Kiến thức khoa học cơ bản > Giải tích 1"
+]
+
+KẾT QUẢ (Chỉ xuất danh sách JSON các chuỗi string, không giải thích thêm):
 '''

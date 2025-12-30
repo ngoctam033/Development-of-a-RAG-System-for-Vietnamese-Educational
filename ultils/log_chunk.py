@@ -1,6 +1,7 @@
 from .logger import logger
 from typing import List, Dict, Any
 import json
+from .get_data import extract_header_paths
 
 def log_chunk_details(chunk_relevant: List[Dict[str, Any]]):
     """
@@ -12,6 +13,8 @@ def log_chunk_details(chunk_relevant: List[Dict[str, Any]]):
     """
     if not chunk_relevant:
         return
+    tree_header_path = extract_header_paths(chunk_relevant)
+    logger.info(tree_header_path)
 
     for chunk in chunk_relevant:
         # Trích xuất các thông tin quan trọng cần hiển thị

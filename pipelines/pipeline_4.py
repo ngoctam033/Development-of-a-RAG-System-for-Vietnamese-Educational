@@ -165,12 +165,12 @@ def run(question: str):
         filter_by_keywords(question, chunk_relevant),
         key=lambda x: x.get("similarity_score", {}).get("keyword_match", 0.0),
         reverse=True
-    )
+    )[:30]
     chunk_relevant = sorted(
         rerank_with_cross_encoder(question, chunk_relevant),
         key=lambda x: x.get("similarity_score", {}).get("cross_encoder", 0.0),
         reverse=True
-    )
+    )[:10]
     # Tính tổng điểm similarity_score cho mỗi chunk
     for chunk in chunk_relevant:
         total_score = (

@@ -1,509 +1,752 @@
 import json
 import pandas as pd
 import os
-import csv
 import re
-import streamlit as st
+import csv
+# import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
+from typing import List, Dict, Tuple, Any, Optional
+from openai import OpenAI
+
 # Cấu hình trang Dashboard
-st.set_page_config(layout="wide", page_title="RAG System Evaluation Dashboard")
-def load_data(dim_chunk_path, fact_query_path, gt_path):
-    """
-    Hàm load dữ liệu từ 3 file CSV.
-    """
-    try:
-        # Load Dim Chunk
-        df_chunk = pd.read_csv(dim_chunk_path)
-        
-        # Load Fact Query (File kết quả chạy pipeline)
-        # Lưu ý: File này dùng tab separated như logic trước đó
-        df_fact = pd.read_csv(fact_query_path, sep='\t')
-        
-        # Load Ground Truth
-        df_gt = pd.read_csv(gt_path)
-        
-        return df_chunk, df_fact, df_gt
-    except Exception as e:
-        st.error(f"Lỗi khi load dữ liệu: {e}")
-        return None, None, None
+# st.set_page_config(layout="wide", page_title="RAG System Evaluation Dashboard")
 
-def create_dashboard_report(df_chunk, df_fact, df_gt):
-    """
-    Hàm chính để render dashboard.
-    """
-    st.title("📊 RAG System Evaluation Dashboard")
-    st.markdown("---")
+# =============================================================================
+# 1. I/O & FILE OPERATIONS (ĐỌC/GHI FILE)
+# =============================================================================
 
-    # --- TIỀN XỬ LÝ DỮ LIỆU ---
-    # Merge thông tin Chunk vào Fact để biết Header Path của Target Chunk
-    # df_fact['target_chunk_id'] = pd.to_numeric(df_fact['target_chunk_id'], errors='coerce')
-    # df_chunk['chunk_index'] = pd.to_numeric(df_chunk['chunk_index'], errors='coerce')
-    
-    df_merged = pd.merge(
-        df_fact, 
-        df_chunk[['chunk_index', 'chapter_title', 'header_path']], 
-        left_on='target_chunk_id', 
-        right_on='chunk_index', 
-        how='left'
-    )
-    
-    # Tách dữ liệu theo Pipeline Type
-    pipelines = df_fact['pipeline_type'].unique()
-    
-    # =========================================================================
-    # 🟦 PANEL GROUP 1 – OVERVIEW (EXECUTIVE)
-    # =========================================================================
-    st.header("🟦 PANEL 1: OVERVIEW (EXECUTIVE)")
-    
-    # Tính KPI tổng hợp
-    kpi_df = df_fact.groupby('pipeline_type').agg({
-        'hit_rate': 'mean', # Tương đương Recall
-        'mrr': 'mean',
-        'crr': 'mean',
-        'retrieved_chunks_count': 'mean'
-    }).reset_index()
-
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.subheader("Recall Comparison")
-        fig_recall = px.bar(
-            kpi_df, x='pipeline_type', y='hit_rate', 
-            color='pipeline_type', 
-            text_auto='.2%',
-            title="Recall Hit Rate by Pipeline",
-            labels={'hit_rate': 'Recall (Hit Rate)'}
-        )
-        st.plotly_chart(fig_recall, use_container_width=True)
-        
-    with col2:
-        st.subheader("MRR Comparison")
-        fig_mrr = px.bar(
-            kpi_df, x='pipeline_type', y='mrr', 
-            color='pipeline_type', 
-            text_auto='.2f',
-            title="Mean Reciprocal Rank (MRR)",
-            labels={'mrr': 'MRR Score'}
-        )
-        st.plotly_chart(fig_mrr, use_container_width=True)
-
-    # =========================================================================
-    # 🟦 PANEL GROUP 2 – RETRIEVAL EFFECTIVENESS
-    # =========================================================================
-    st.markdown("---")
-    st.header("🟦 PANEL 2: RETRIEVAL EFFECTIVENESS")
-    
-    tab1, tab2, tab3 = st.tabs(["Metrics Distribution", "Candidate Reduction", "Header Analysis"])
-    
-    with tab1:
-        col_mrr_dist, col_rank_dist = st.columns(2)
-        
-        with col_mrr_dist:
-            fig_mrr_box = px.box(
-                df_fact, x='pipeline_type', y='mrr', points="all",
-                title="MRR Distribution (Độ ổn định của kết quả)",
-                color='pipeline_type'
-            )
-            st.plotly_chart(fig_mrr_box, use_container_width=True)
-            
-        with col_rank_dist:
-            # Chỉ lấy những trường hợp tìm thấy (Rank > 0)
-            df_hits = df_fact[df_fact['rank'] > 0]
-            fig_rank = px.box(
-                df_hits, x='pipeline_type', y='rank', points="all",
-                title="Rank Distribution of Correct Chunks (Thấp hơn là tốt hơn)",
-                color='pipeline_type'
-            )
-            fig_rank.update_yaxes(autorange="reversed") # Rank 1 nằm trên cao
-            st.plotly_chart(fig_rank, use_container_width=True)
-
-    with tab2:
-        col_crr, col_count = st.columns(2)
-        with col_crr:
-            fig_crr = px.violin(
-                df_fact, x='pipeline_type', y='crr', box=True,
-                title="Candidate Reduction Ratio (CRR)",
-                color='pipeline_type'
-            )
-            st.plotly_chart(fig_crr, use_container_width=True)
-        
-        with col_count:
-            fig_count = px.histogram(
-                df_fact, x='retrieved_chunks_count', color='pipeline_type', barmode='overlay',
-                title="Candidate Count Distribution (Số lượng chunk tìm thấy)"
-            )
-            st.plotly_chart(fig_count, use_container_width=True)
-
-    with tab3:
-        st.subheader("Header-path Hit Heatmap (Top 10 Chapters)")
-        # Phân tích xem Chapter nào được tìm thấy nhiều nhất (True Positives)
-        # Chỉ tính những dòng có hit_rate = 1
-        df_hits_only = df_merged[df_merged['hit_rate'] == 1]
-        
-        if not df_hits_only.empty:
-            header_stats = df_hits_only.groupby(['chapter_title', 'pipeline_type']).size().reset_index(name='count')
-            # Lấy top 10 chapter phổ biến
-            top_chapters = header_stats.groupby('chapter_title')['count'].sum().nlargest(10).index
-            header_stats_top = header_stats[header_stats['chapter_title'].isin(top_chapters)]
-            
-            fig_heatmap = px.density_heatmap(
-                header_stats_top, x='pipeline_type', y='chapter_title', z='count',
-                title="Hit Count by Chapter Title",
-                text_auto=True
-            )
-            st.plotly_chart(fig_heatmap, use_container_width=True)
-        else:
-            st.info("Chưa có dữ liệu Hit (Recall = 0) để vẽ Heatmap.")
-
-    # =========================================================================
-    # 🟦 PANEL GROUP 3 – ANSWER QUALITY (Placeholder metrics)
-    # =========================================================================
-    # Do dữ liệu hiện tại chưa có 'Answer Score', ta sẽ dùng 'Rank' làm proxy
-    st.markdown("---")
-    st.header("🟦 PANEL 3: ANSWER QUALITY (Proxy Metrics)")
-    st.caption("*Lưu ý: Dữ liệu hiện tại chưa bao gồm Answer Score/Faithfulness. Biểu đồ dưới đây sử dụng Rank (Vị trí tìm thấy) như một chỉ số chất lượng thay thế.*")
-
-    col_q1, col_q2 = st.columns(2)
-    with col_q1:
-        # Rank càng nhỏ (gần 1) thì chất lượng context càng cao
-        rank_avg = df_hits.groupby('pipeline_type')['rank'].mean().reset_index()
-        fig_rank_bar = px.bar(
-            rank_avg, x='pipeline_type', y='rank', color='pipeline_type',
-            title="Average Rank of Correct Chunk (Lower is Better)",
-            text_auto='.2f'
-        )
-        st.plotly_chart(fig_rank_bar, use_container_width=True)
-        
-    with col_q2:
-        # Recall Preservation Rate
-        fig_rpr = px.pie(
-            df_fact, names='pipeline_type', values='recall_preservation_rate',
-            title="Total Recall Preservation Share"
-        )
-        st.plotly_chart(fig_rpr, use_container_width=True)
-
-    # =========================================================================
-    # 🟦 PANEL GROUP 4 – TRADE-OFF ANALYSIS (Efficiency)
-    # =========================================================================
-    st.markdown("---")
-    st.header("🟦 PANEL 4: TRADE-OFF ANALYSIS")
-    
-    col_to1, col_to2 = st.columns(2)
-    
-    with col_to1:
-        # Scatter: Retrieved Count vs MRR
-        # Xem xét xem việc lấy nhiều chunk có giúp tăng MRR không
-        fig_scatter = px.scatter(
-            df_fact, x='retrieved_chunks_count', y='mrr', color='pipeline_type',
-            title="Trade-off: Retrieved Count vs MRR",
-            trendline="ols" # Thêm đường xu hướng
-        )
-        st.plotly_chart(fig_scatter, use_container_width=True)
-        
-    with col_to2:
-        # Phân tích Failure Cases (Miss Recall)
-        # Những case có hit_rate = 0
-        miss_df = df_fact[df_fact['hit_rate'] == 0]
-        if not miss_df.empty:
-            miss_count = miss_df.groupby('pipeline_type').size().reset_index(name='miss_count')
-            fig_miss = px.bar(
-                miss_count, x='pipeline_type', y='miss_count', color='pipeline_type',
-                title="Number of Failed Queries (Zero Recall)",
-                text_auto=True
-            )
-            st.plotly_chart(fig_miss, use_container_width=True)
-        else:
-            st.success("Tuyệt vời! Không có Failure Case nào.")
-
-    # =========================================================================
-    # 🟦 PANEL GROUP 5 – A/B COMPARISON (KEY)
-    # =========================================================================
-    st.markdown("---")
-    st.header("🟦 PANEL 5: A/B COMPARISON TABLE (KEY CONCLUSION)")
-    
-    # Tạo bảng so sánh Pivot
-    pivot_table = df_fact.groupby('pipeline_type').agg({
-        'hit_rate': 'mean',
-        'mrr': 'mean',
-        'rank': lambda x: x[x>0].mean(), # Chỉ tính rank của những case tìm thấy
-        'retrieved_chunks_count': 'mean',
-        'crr': 'mean'
-    }).reset_index()
-    
-    # Đổi tên cột cho đẹp
-    pivot_table.columns = ['Pipeline', 'Recall (Hit Rate)', 'MRR', 'Avg Rank (Correct)', 'Avg Retrieved Count', 'CRR']
-    
-    # Tính Delta (metadata vs baseline) nếu có đủ 2 loại
-    if len(pivot_table) == 2:
-        # Giả sử dòng 0 là baseline, dòng 1 là metadata (hoặc ngược lại tùy dữ liệu)
-        # Sắp xếp để baseline lên trước (thường là a-z)
-        pivot_table = pivot_table.sort_values('Pipeline')
-        
-        baseline = pivot_table.iloc[0]
-        metadata = pivot_table.iloc[1]
-        
-        delta_row = {
-            'Pipeline': 'Δ (Delta)',
-            'Recall (Hit Rate)': f"{metadata['Recall (Hit Rate)'] - baseline['Recall (Hit Rate)']:.2%}",
-            'MRR': f"{metadata['MRR'] - baseline['MRR']:.4f}",
-            'Avg Rank (Correct)': f"{metadata['Avg Rank (Correct)'] - baseline['Avg Rank (Correct)']:.2f}",
-            'Avg Retrieved Count': f"{metadata['Avg Retrieved Count'] - baseline['Avg Retrieved Count']:.1f}",
-            'CRR': f"{metadata['CRR'] - baseline['CRR']:.2%}"
-        }
-        pivot_table = pd.concat([pivot_table, pd.DataFrame([delta_row])], ignore_index=True)
-
-    # Format hiển thị
-    st.dataframe(
-        pivot_table.style.highlight_max(axis=0, color='lightgreen', subset=['Recall (Hit Rate)', 'MRR', 'CRR']),
-        use_container_width=True
-    )
-    
-    st.info("📌 **Kết luận:** Bảng trên thể hiện sự chênh lệch hiệu suất giữa các Pipeline. Recall và MRR cao hơn là tốt hơn. Avg Rank thấp hơn là tốt hơn.")
-def create_dim_chunk(json_data):
-    """
-    Hàm chuyển đổi list dictionary thành DataFrame (bảng dim_chunk)
-    """
-    try:
-        # Bước 1: Tạo DataFrame ban đầu từ dữ liệu gốc
-        df_raw = pd.DataFrame(json_data)
-        
-        # Bước 2: Xử lý cột 'metadata' (đang là dạng dict)
-        # Sử dụng json_normalize để "làm phẳng" (flatten) cột metadata thành các cột riêng
-        # Nếu cột metadata không tồn tại hoặc bị lỗi, cần xử lý ngoại lệ
-        if 'metadata' in df_raw.columns:
-            df_metadata = pd.json_normalize(df_raw['metadata'])
-            
-            # Bước 3: Ghép cột 'content' với các cột metadata đã làm phẳng
-            # axis=1 nghĩa là ghép theo chiều dọc (cột)
-            # drop cột metadata cũ đi để tránh trùng lặp
-            dim_chunk = pd.concat([df_raw.drop(columns=['metadata']), df_metadata], axis=1)
-        else:
-            dim_chunk = df_raw
-
-        # (Tuỳ chọn) Đổi tên cột hoặc sắp xếp lại cột cho đẹp nếu cần
-        # Ưu tiên đưa các cột quan trọng lên đầu nếu chúng tồn tại
-        priority_cols = ['chunk_index', 'document_name', 'content'] 
-        existing_priority_cols = [c for c in priority_cols if c in dim_chunk.columns]
-        other_cols = [c for c in dim_chunk.columns if c not in existing_priority_cols]
-        
-        dim_chunk = dim_chunk[existing_priority_cols + other_cols]
-
-        return dim_chunk
-
-    except Exception as e:
-        print(f"Có lỗi xảy ra trong quá trình chuyển đổi dữ liệu: {e}")
+def load_json_file(file_path: str) -> Optional[Any]:
+    """Đọc file JSON an toàn."""
+    if not os.path.exists(file_path):
         return None
-def parse_log_by_separator(file_path):
-    """
-    Hàm đọc file log và phân tách thành các block dựa trên dòng phân cách.
-    Dòng phân cách chứa chuỗi: '=================================================='
-    Mỗi block được lưu thành dict {"raw": "nội dung log"}
-    """
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"❌ Lỗi đọc JSON {file_path}: {e}")
+        return None
+
+def load_csv_file(file_path: str) -> Optional[pd.DataFrame]:
+    """Đọc file CSV an toàn."""
+    if not os.path.exists(file_path):
+        return None
+    try:
+        return pd.read_csv(file_path)
+    except Exception as e:
+        print(f"❌ Lỗi đọc CSV {file_path}: {e}")
+        return None
+
+def save_dataframe_to_csv(df: pd.DataFrame, file_path: str) -> None:
+    """Lưu DataFrame xuống CSV."""
+    try:
+        df.to_csv(file_path, index=False, encoding='utf-8')
+        print(f"✅ Đã lưu file: {file_path} ({len(df)} dòng)")
+    except Exception as e:
+        print(f"❌ Lỗi lưu CSV {file_path}: {e}")
+
+# =============================================================================
+# 2. LOG PARSING LOGIC (XỬ LÝ TEXT LOG)
+# =============================================================================
+
+def split_log_file_into_blocks(file_path: str, separator: str = "==================================================") -> List[str]:
+    """Đọc file log và tách thành các block text dựa trên dòng phân cách."""
     blocks = []
-    current_block_lines = []
+    current_lines = []
     
-    # Chuỗi đặc trưng để nhận diện dòng phân cách
-    separator_marker = "rag_pipeline - INFO - [main.py:13] - =================================================="
+    if not os.path.exists(file_path):
+        return []
+
     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
         for line in f:
-            # Kiểm tra xem dòng hiện tại có phải là dòng phân cách không
-            if separator_marker in line:
-                # Nếu đang có nội dung tích lũy (current_block_lines không rỗng), 
-                # thì đóng gói nó lại thành 1 block hoàn chỉnh
-                if current_block_lines:
-                    # Ghép các dòng lại thành 1 chuỗi text
-                    block_content = "".join(current_block_lines).strip()
-                    if block_content: # Chỉ thêm nếu nội dung không rỗng
-                        blocks.append({"raw": block_content})
-                    
-                # Reset biến tích lũy để bắt đầu block mới
-                # (Dòng separator bị bỏ qua, không đưa vào nội dung raw)
-                current_block_lines = [] 
+            if separator in line:
+                content = "".join(current_lines).strip()
+                if content:
+                    blocks.append(content)
+                current_lines = []
             else:
-                # Nếu không phải dòng phân cách, thêm dòng vào block hiện tại
-                current_block_lines.append(line)
+                current_lines.append(line)
         
-        # Xử lý phần còn lại sau dòng phân cách cuối cùng (nếu có)
-        if current_block_lines:
-            block_content = "".join(current_block_lines).strip()
-            if block_content:
-                blocks.append({"raw": block_content})
-        
+        # Xử lý block cuối cùng
+        content = "".join(current_lines).strip()
+        if content:
+            blocks.append(content)
+            
     return blocks
-def save_to_csv(data, output_path):
-    # Lấy header từ phần tử đầu tiên
-    fieldnames = data[0].keys()
-    
-    with open(output_path, 'w', newline='', encoding='utf-8-sig') as csvfile:
-        # SỬ DỤNG delimiter='\t' (Tab) thay vì dấu phẩy mặc định
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='\t')
-        
-        writer.writeheader()
-        writer.writerows(data)
 
-def processing_log_folder(folder_path):
-    """
-    Hàm nhận vào đường dẫn folder, xử lý log, đọc ground truth và tính toán các metrics:
-    Recall@K, Hit Rate@K, MRR, Average Rank (cho từng dòng), CRR, Recall Preservation Rate.
-    """
-    # --- 1. Đọc file CSV Ground Truth bằng Pandas ---
-    ground_truth_path = 'dashboard/dim_query_ground_truth.csv'
+def extract_log_metadata(raw_text: str) -> Dict[str, Any]:
+    """Trích xuất thông tin cơ bản từ text log (Question, Model, Pipeline Type)."""
+    # Filter: Chỉ lấy log của model cụ thể này (giữ nguyên logic cũ)
+    if "Sử dụng model: qwen/qwen3-4b-2507" not in raw_text:
+        return {}
+
+    data = {"raw": raw_text}
     
-    # Dictionary để tra cứu nhanh: Question -> True Chunk Index
+    # 1. Extract Question
+    match_q = re.search(r'Question:\s*(.*)', raw_text)
+    data["question"] = match_q.group(1).strip() if match_q else ""
+
+    # 2. Extract Pipeline Type
+    if "[pipeline_6.py:26]" in raw_text:
+        data["pipeline_type"] = "metadata"
+    else:
+        data["pipeline_type"] = "base line"
+        
+    return data
+
+def extract_log_answer_and_chunks(raw_text: str) -> Dict[str, Any]:
+    """Trích xuất câu trả lời và danh sách chunk index."""
+    data = {}
+    
+    # 1. Extract Answer
+    match_ans = re.search(r'- ANSWER:\s*(.*)', raw_text, re.DOTALL)
+    llm_answer = match_ans.group(1).strip() if match_ans else ""
+    data["llm_answer"] = llm_answer
+    
+    # 2. Check Has Answer
+    # Logic: Nếu model trả lời kiểu "không tìm thấy" -> has_answer = False
+    refusal_phrase = "Tôi không tìm thấy thông tin đủ để trả lời câu hỏi này"
+    data["has_answer"] = False if refusal_phrase in llm_answer else True
+
+    # 3. Extract Retrieved Chunks
+    matches_chunks = re.findall(r'"chunk_index":\s*(\d+)', raw_text)
+    chunks = [int(c) for c in matches_chunks] if matches_chunks else []
+    
+    data["retrieved_chunks_list"] = str(chunks) # Lưu dạng string để save CSV
+    data["retrieved_chunks_raw"] = chunks # Lưu dạng list để tính toán
+    data["retrieved_chunks_count"] = len(chunks)
+    
+    return data
+
+# =============================================================================
+# 3. METRIC CALCULATION (TÍNH TOÁN CHỈ SỐ)
+# =============================================================================
+
+def calculate_rank_and_mrr(target_id: int, retrieved_ids: List[int]) -> Tuple[int, float, int]:
+    """Tính Rank, MRR và Hit (Recall)."""
+    if target_id == -1 or not retrieved_ids:
+        return 0, 0.0, 0
+        
+    if target_id in retrieved_ids:
+        rank = retrieved_ids.index(target_id) + 1
+        mrr = 1.0 / rank
+        is_hit = 1
+    else:
+        rank = 0
+        mrr = 0.0
+        is_hit = 0
+        
+    return rank, mrr, is_hit
+
+def calculate_crr(retrieved_count: int, total_docs: int) -> float:
+    """Tính Candidate Reduction Ratio."""
+    if total_docs <= 0:
+        return 0.0
+    return 1.0 - (retrieved_count / total_docs)
+
+# =============================================================================
+# 4. DATA PROCESSING (XỬ LÝ DATAFRAME & LOGIC NGHIỆP VỤ)
+# =============================================================================
+
+def process_dim_chunk(json_data: List[Dict]) -> Optional[pd.DataFrame]:
+    """Chuyển đổi dữ liệu JSON dim_chunk thành DataFrame phẳng."""
+    if not json_data:
+        return None
+    try:
+        df_raw = pd.DataFrame(json_data)
+        if 'metadata' in df_raw.columns:
+            df_metadata = pd.json_normalize(df_raw['metadata'])
+            df = pd.concat([df_raw.drop(columns=['metadata']), df_metadata], axis=1)
+        else:
+            df = df_raw
+            
+        # Sắp xếp cột ưu tiên
+        priority_cols = ['chunk_index', 'document_name', 'content'] 
+        existing_cols = [c for c in priority_cols if c in df.columns]
+        other_cols = [c for c in df.columns if c not in existing_cols]
+        
+        return df[existing_cols + other_cols]
+    except Exception as e:
+        print(f"Lỗi xử lý dim_chunk: {e}")
+        return None
+
+def load_ground_truth_map(file_path: str) -> Tuple[Dict[str, int], int]:
+    """Load Ground Truth và trả về Mapping {Question: ChunkIndex} cùng tổng số docs."""
     gt_map = {}
-    total_docs_in_corpus = 0 
+    max_idx = 0
+    default_total = 1000
 
-    if os.path.exists(ground_truth_path):
+    df_gt = load_csv_file(file_path)
+    if df_gt is None:
+        print(f"⚠️ Cảnh báo: Không tìm thấy Ground Truth tại {file_path}")
+        return gt_map, default_total
+
+    if 'Question' in df_gt.columns and 'Chunk_index' in df_gt.columns:
+        df_clean = df_gt.dropna(subset=['Question', 'Chunk_index'])
+        for _, row in df_clean.iterrows():
+            q = str(row['Question']).strip()
+            try:
+                c_idx = int(row['Chunk_index'])
+                gt_map[q] = c_idx
+                if c_idx > max_idx:
+                    max_idx = c_idx
+            except ValueError:
+                continue
+    
+    print(f"Đã load Ground Truth: {len(gt_map)} câu hỏi.")
+    return gt_map, (max_idx if max_idx > 0 else default_total)
+
+def clean_processed_logs(df: pd.DataFrame) -> pd.DataFrame:
+    """Lọc rác, xóa dòng lỗi, xóa trùng lặp."""
+    if df.empty: 
+        return df
+    
+    initial_len = len(df)
+    
+    # 1. Xóa dòng không có chunks (list rỗng '[]')
+    if 'retrieved_chunks_list' in df.columns:
+        df = df[df['retrieved_chunks_list'] != '[]']
+        
+    # 2. Xóa dòng không có câu trả lời (chuỗi rỗng)
+    if 'llm_answer' in df.columns:
+        df = df[df['llm_answer'].astype(str).str.strip() != '']
+        
+    # 3. Deduplicate (giữ log mới nhất cho cùng 1 câu hỏi + pipeline)
+    if 'question' in df.columns and 'pipeline_type' in df.columns:
+        df = df.drop_duplicates(subset=['question', 'pipeline_type'], keep='last')
+        
+    print(f"🧹 Validation: Đã lọc {initial_len - len(df)} dòng rác/trùng lặp.")
+    return df
+def call_lm_studio_completion(prompt: str, system_prompt: str = "You are a helpful assistant.", temperature: float = 0.2) -> str:
+    """
+    Hàm sinh văn bản sử dụng Local LLM thông qua LM Studio (OpenAI Compatible API).
+    Yêu cầu: Đã cài đặt thư viện 'openai' (pip install openai).
+    """
+
+    try:
+        # Cấu hình Client trỏ tới Local Server của LM Studio
+        client = OpenAI(
+            base_url="http://localhost:1234/v1", 
+            api_key="lm-studio"
+        )
+
+        # Lấy danh sách model đang load
         try:
-            # Đọc file CSV
-            df_gt = pd.read_csv(ground_truth_path, encoding='utf-8')
+            models = client.models.list()
+            if not models.data:
+                print("⚠️ [LM Studio] Không có model nào được load.")
+                return ""
+            model_name = models.data[0].id
+        except Exception:
+            # Fallback nếu API list models gặp lỗi
+            model_name = "local-model"
+
+        # Gọi Chat Completion
+        response = client.chat.completions.create(
+            model=model_name,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            max_tokens=200, # Giới hạn token output cho task verify ngắn gọn
+        )
+        
+        return response.choices[0].message.content.strip()
             
-            # Tạo map: key là câu hỏi (strip space), value là chunk_index (int)
-            # Giả sử cột Question và Chunk_index tồn tại
-            if 'Question' in df_gt.columns and 'Chunk_index' in df_gt.columns:
-                # Loại bỏ dòng trống hoặc lỗi
-                df_gt = df_gt.dropna(subset=['Question', 'Chunk_index'])
+    except Exception as e:
+        print(f"❌ Lỗi kết nối LM Studio: {str(e)}")
+        return ""
+def find_best_matching_chunk_with_llm(question: str, answer: str, retrieved_ids: List[int], chunk_df: pd.DataFrame) -> int:
+    """
+    Gọi Local LLM để kiểm tra xem trong danh sách retrieved_ids có chunk nào
+    thực sự chứa thông tin trả lời cho câu hỏi không (Semantic Match).
+    Sử dụng chunk_df (pandas DataFrame) để tra cứu nội dung.
+    Trả về chunk_index phù hợp nhất hoặc -1.
+    """
+    
+    if not retrieved_ids or chunk_df is None or chunk_df.empty:
+        return -1
+
+    # Kiểm tra xem DataFrame có cột chunk_index không để query cho chính xác
+    has_index_col = 'chunk_index' in chunk_df.columns
+    has_content_col = 'content' in chunk_df.columns
+
+    if not has_content_col:
+        return -1
+
+    print(f"🔍 Đang gọi Local LLM để verify chunk cho câu hỏi: '{question}'...")
+    
+    # System Prompt dành riêng cho task Verification
+    verification_system_prompt = (
+        "You are an expert evaluator for a RAG system. "
+        "Your task is to verify if the provided Context contains the specific information needed to answer the Question."
+    )
+
+    for c_id in retrieved_ids:
+        chunk_content = ""
+        
+        # Lấy nội dung từ DataFrame
+        if has_index_col:
+            # Lọc theo cột chunk_index
+            match_row = chunk_df[chunk_df['chunk_index'] == c_id]
+            if not match_row.empty:
+                chunk_content = str(match_row.iloc[0]['content'])
+        else:
+            # Fallback: Giả sử index của DF là chunk_index nếu không có cột rõ ràng
+            if c_id in chunk_df.index:
+                 chunk_content = str(chunk_df.loc[c_id]['content'])
+
+        if not chunk_content:
+            continue
+            
+        # Prompt đánh giá
+        prompt = f"""
+        Question: {question}
+        Answer: {answer}
+        
+        Context:
+        {chunk_content}
+        
+        Task: Does the Context provided above contain the specific information used to generate the Answer?
+        Respond with EXACTLY one word: "YES" or "NO".
+        """
+        
+        # --- GỌI API THỰC TẾ ---
+        response_text = call_lm_studio_completion(
+            prompt=prompt, 
+            system_prompt=verification_system_prompt,
+            temperature=0.0 # Temp = 0 để kết quả nhất quán
+        )
+        
+        # Kiểm tra kết quả trả về
+        if response_text and "YES" in response_text.upper():
+            print(f"✅ LLM Found Match: Chunk {c_id}")
+            return c_id
+
+    return -1
+def evaluate_single_log_item(item: Dict[str, Any], gt_map: Dict[str, int], total_docs: int, chunk_df: pd.DataFrame) -> Dict[str, Any]:
+    """
+    Tính toán các chỉ số đánh giá cho một dòng log đơn lẻ.
+    Bao gồm logic kiểm tra lại bằng LLM nếu không khớp nhãn.
+    """
+    retrieved_ids = item.get("retrieved_chunks_raw", [])
+    
+    # 1. Determine Target Chunk ID (WITH LLM FALLBACK)
+    gt_target_id = gt_map.get(item["question"], -1)
+    final_target_id = gt_target_id
+    
+    # # Logic kiểm tra bằng LLM nếu target gốc bị thiếu hoặc không tìm thấy trong list retrieved
+    if (final_target_id == -1 or final_target_id not in retrieved_ids) and retrieved_ids:
+        
+        corrected_id = find_best_matching_chunk_with_llm(
+            item["question"], 
+            item["llm_answer"], 
+            retrieved_ids, 
+            chunk_df
+        )
+        
+        if corrected_id != -1:
+            final_target_id = corrected_id
+            item["is_corrected_by_llm"] = True
+        else:
+            item["is_corrected_by_llm"] = False
+
+    item["target_chunk_id"] = final_target_id
+    
+    # 2. Calculate Metrics
+    rank, mrr, is_hit = calculate_rank_and_mrr(final_target_id, retrieved_ids)
+    # crr = calculate_crr(item.get("retrieved_chunks_count", 0), total_docs)
+    
+    item.update({
+        "rank": rank,
+        "mrr": mrr,
+        "hit_rate": is_hit,
+        "recall": is_hit,
+        "recall_preservation_rate": 1.0 if is_hit else 0.0,
+        # "crr": crr
+    })
+    item["is_processed"] = True
+    return item
+def process_log_files(folder_path: str, gt_map: Dict[str, int], total_docs: int, chunk_df: pd.DataFrame, fact_query_path: str) -> List[Dict]:
+    """Hàm lõi: Duyệt file log -> Parse -> Tính metric -> Trả về list dict."""
+    processed_data = []
+            
+    # Tạo set lookup cho các câu trả lời đã được xử lý (is_processed = True) để tăng tốc độ kiểm tra
+    processed_answers_set = {
+        item['llm_answer'] 
+        for item in processed_data 
+        if item.get('is_processed') == True and 'llm_answer' in item
+    }
+    
+    if not os.path.exists(folder_path):
+        return processed_data
+
+    for filename in os.listdir(folder_path):
+        file_path = os.path.join(folder_path, filename)
+        if not os.path.isfile(file_path):
+            continue
+
+        blocks = split_log_file_into_blocks(file_path)
+        
+        for raw_text in blocks:
+            # 1. Extract Metadata
+            meta = extract_log_metadata(raw_text)
+            if not meta: 
+                continue
                 
-                for _, row in df_gt.iterrows():
-                    q_text = str(row['Question']).strip()
+            # 2. Extract Answer & Retrieval Info
+            content = extract_log_answer_and_chunks(raw_text)
+            
+            # --- KIỂM TRA ĐÃ XỬ LÝ CHƯA ---
+            # Nếu câu trả lời đã tồn tại trong dữ liệu cũ và is_processed = True -> Bỏ qua
+            if content.get("llm_answer") in processed_answers_set:
+                continue
+
+            # 3. Merge Info
+            item = {**meta, **content}
+            
+            # # 4. Calculate Metrics (Delegated to evaluate_single_log_item)
+            item = evaluate_single_log_item(item, gt_map, total_docs, chunk_df)
+            
+            # Xóa các trường tạm
+            if "raw" in item: del item["raw"]
+            if "retrieved_chunks_raw" in item: del item["retrieved_chunks_raw"]
+            
+            processed_data.append(item)
+            
+    return processed_data
+
+
+# =============================================================================
+# 5. VISUALIZATION COMPONENTS (DASHBOARD PANELS)
+# =============================================================================
+
+# def render_overview_panel(df: pd.DataFrame):
+#     """Vẽ Panel 1: Overview KPIs."""
+#     st.header("🟦 PANEL 1: OVERVIEW (EXECUTIVE)")
+    
+#     agg_dict = {
+#         'hit_rate': 'mean',
+#         'mrr': 'mean',
+#         'retrieved_chunks_count': 'mean'
+#     }
+    
+#     has_ans_col = None
+#     if 'has_answer' in df.columns:
+#         df['has_answer_int'] = df['has_answer'].astype(int)
+#         agg_dict['has_answer_int'] = 'mean'
+#         has_ans_col = 'has_answer_int'
+
+#     kpi_df = df.groupby('pipeline_type').agg(agg_dict).reset_index()
+
+#     col1, col2 = st.columns(2)
+#     with col1:
+#         st.subheader("Recall Comparison")
+#         fig = px.bar(kpi_df, x='pipeline_type', y='hit_rate', color='pipeline_type', 
+#                      text_auto='.2%', title="Recall Hit Rate")
+#         st.plotly_chart(fig, use_container_width=True)
+        
+#     with col2:
+#         if has_ans_col:
+#             st.subheader("Response Rate Comparison")
+#             fig = px.bar(kpi_df, x='pipeline_type', y=has_ans_col, color='pipeline_type', 
+#                          text_auto='.2%', title="Response Rate")
+#         else:
+#             st.subheader("MRR Comparison")
+#             fig = px.bar(kpi_df, x='pipeline_type', y='mrr', color='pipeline_type', 
+#                          text_auto='.2f', title="Mean Reciprocal Rank")
+#         st.plotly_chart(fig, use_container_width=True)
+
+# def render_retrieval_panel(df: pd.DataFrame, df_merged: pd.DataFrame):
+#     """Vẽ Panel 2: Retrieval Effectiveness."""
+#     st.markdown("---")
+#     st.header("🟦 PANEL 2: RETRIEVAL EFFECTIVENESS")
+    
+#     tab1, tab2, tab3 = st.tabs(["Metrics Dist", "Candidate Reduction", "Header Analysis"])
+    
+#     with tab1:
+#         c1, c2 = st.columns(2)
+#         with c1:
+#             fig = px.box(df, x='pipeline_type', y='mrr', color='pipeline_type', title="MRR Distribution")
+#             st.plotly_chart(fig, use_container_width=True)
+#         with c2:
+#             df_hits = df[df['rank'] > 0]
+#             if not df_hits.empty:
+#                 fig = px.box(df_hits, x='pipeline_type', y='rank', color='pipeline_type', title="Rank Distribution")
+#                 fig.update_yaxes(autorange="reversed")
+#                 st.plotly_chart(fig, use_container_width=True)
+                
+#     with tab2:
+#         c1, c2 = st.columns(2)
+#         with c1:
+#             fig = px.violin(df, x='pipeline_type', y='crr', box=True, color='pipeline_type', title="CRR")
+#             st.plotly_chart(fig, use_container_width=True)
+#         with c2:
+#             fig = px.histogram(df, x='retrieved_chunks_count', color='pipeline_type', title="Chunk Count Dist")
+#             st.plotly_chart(fig, use_container_width=True)
+            
+#     with tab3:
+#         df_hits_only = df_merged[df_merged['hit_rate'] == 1]
+#         if not df_hits_only.empty and 'chapter_title' in df_hits_only.columns:
+#             stats = df_hits_only.groupby(['chapter_title', 'pipeline_type']).size().reset_index(name='count')
+#             top = stats.groupby('chapter_title')['count'].sum().nlargest(10).index
+#             stats_top = stats[stats['chapter_title'].isin(top)]
+#             fig = px.density_heatmap(stats_top, x='pipeline_type', y='chapter_title', z='count', title="Heatmap")
+#             st.plotly_chart(fig, use_container_width=True)
+
+def classify_behavior_row(row):
+    """Logic phân loại hành vi Generation."""
+    hit = row['hit_rate'] > 0
+    answered = bool(row['has_answer'])
+    
+    if hit and answered: return "Grounded Answer (Good)"
+    if not hit and not answered: return "Safe Refusal (Good)"
+    if not hit and answered: return "Potential Hallucination (Risk)"
+    if hit and not answered: return "Over-Conservative (Miss)"
+    return "Unknown"
+
+# def render_generation_panel(df: pd.DataFrame):
+#     """Vẽ Panel 3: Generation Behavior."""
+#     st.markdown("---")
+#     st.header("🟦 PANEL 3: GENERATION BEHAVIOR")
+    
+#     if 'has_answer' not in df.columns:
+#         st.warning("Thiếu cột 'has_answer'.")
+#         return
+
+#     df['behavior_class'] = df.apply(classify_behavior_row, axis=1)
+    
+#     counts = df.groupby(['pipeline_type', 'behavior_class']).size().reset_index(name='count')
+#     totals = df.groupby('pipeline_type').size().reset_index(name='total')
+#     counts = counts.merge(totals, on='pipeline_type')
+#     counts['percentage'] = counts['count'] / counts['total']
+    
+#     color_map = {
+#         "Grounded Answer (Good)": "#2ecc71",
+#         "Safe Refusal (Good)": "#3498db",
+#         "Potential Hallucination (Risk)": "#e74c3c",
+#         "Over-Conservative (Miss)": "#f1c40f"
+#     }
+    
+#     fig = px.bar(counts, x='pipeline_type', y='percentage', color='behavior_class', 
+#                  color_discrete_map=color_map, text_auto='.1%', title="Behavior Distribution")
+#     st.plotly_chart(fig, use_container_width=True)
+
+# def render_comparison_table(df: pd.DataFrame):
+#     """Vẽ Panel 5: Comparison Table."""
+#     st.markdown("---")
+#     st.header("🟦 PANEL 5: KEY CONCLUSION")
+    
+#     agg_conf = {
+#         'hit_rate': 'mean', 'mrr': 'mean', 
+#         'retrieved_chunks_count': 'mean', 
+#         'rank': lambda x: x[x>0].mean() if (x>0).any() else 0
+#     }
+#     if 'has_answer_int' in df.columns:
+#         agg_conf['has_answer_int'] = 'mean'
+        
+#     pivot = df.groupby('pipeline_type').agg(agg_conf).reset_index()
+    
+#     rename_map = {
+#         'pipeline_type': 'Pipeline', 'hit_rate': 'Recall', 'mrr': 'MRR',
+#         'rank': 'Avg Rank (Correct)', 'retrieved_chunks_count': 'Avg Count',
+#         'has_answer_int': 'Response Rate'
+#     }
+#     pivot = pivot.rename(columns=rename_map)
+    
+#     # Tính Delta nếu có 2 dòng
+#     if len(pivot) == 2:
+#         pivot = pivot.sort_values('Pipeline').reset_index(drop=True)
+#         delta = {'Pipeline': 'Δ (Delta)'}
+#         for col in pivot.select_dtypes(include='number').columns:
+#             delta[col] = pivot.iloc[1][col] - pivot.iloc[0][col]
+#         pivot = pd.concat([pivot, pd.DataFrame([delta])], ignore_index=True)
+
+    # st.dataframe(pivot.style.highlight_max(axis=0, color='lightgreen').format("{:.2%}", subset=['Recall', 'Response Rate']), use_container_width=True)
+
+# def create_dashboard_report(df_chunk, df_fact, df_gt):
+#     """Hàm Main của Dashboard: Ghép các panel lại."""
+#     # st.title("📊 RAG System Evaluation Dashboard")
+    
+#     # Merge dữ liệu chunk info vào fact
+#     df_merged = pd.merge(
+#         df_fact, 
+#         df_chunk[['chunk_index', 'chapter_title', 'header_path']], 
+#         left_on='target_chunk_id', 
+#         right_on='chunk_index', 
+#         how='left'
+#     )
+    
+#     render_overview_panel(df_fact)
+#     render_retrieval_panel(df_fact, df_merged)
+#     render_generation_panel(df_fact)
+#     render_comparison_table(df_fact)
+def cal_hit_rate(row, chunk_df: pd.DataFrame):
+    """
+    Hàm tính toán lại hit_rate và target_chunk_id.
+    """
+    # Lấy giá trị hiện tại làm mặc định
+    original_target = row.get('target_chunk_id', 0)
+    
+    # Mặc định giữ nguyên giá trị cũ nếu không tính toán được gì mới
+    new_hit_rate = row.get('hit_rate', 0.0) 
+    new_target_chunk_id = original_target
+    rank = row.get('rank', 0)
+    mrr = row.get('mrr', 0.0)
+    recall_preservation_rate = row.get('recall_preservation_rate', 0.0)
+
+    # 1. Xử lý retrieved_chunks_list (Quan trọng: Convert string sang list nếu cần)
+    retrieved_list = row.get("retrieved_chunks_list", [])
+
+    try:
+        print(f"--> Đang gọi LLM cho câu hỏi: {str(row.get('question'))[:30]}...")
+        
+        corrected_id = find_best_matching_chunk_with_llm(
+            row.get("question", ""), 
+            row.get("llm_answer", ""), 
+            retrieved_list, 
+            chunk_df
+        )
+        
+        if corrected_id != -1:
+            new_target_chunk_id = corrected_id
+            
+            # Tính toán lại chỉ số nếu tìm thấy target mới
+            if new_target_chunk_id in retrieved_list:
+                new_hit_rate = 1.0
+                rank = retrieved_list.index(new_target_chunk_id) + 1
+                mrr = 1.0 / rank
+                recall_preservation_rate = 1.0
+            else:
+                # Trường hợp LLM trả về ID nhưng ID đó vẫn không nằm trong top k retrieved (hiếm gặp)
+                new_hit_rate = 0.0
+                rank = 0
+                mrr = 0.0
+                
+    except Exception as e:
+            print(f"⚠️ Lỗi khi gọi LLM: {e}")
+
+    return pd.Series([new_hit_rate, new_target_chunk_id, rank, mrr, recall_preservation_rate], 
+                     index=['hit_rate', 'target_chunk_id', 'rank', 'mrr', 'recall_preservation_rate'])
+
+def calculate_metrics(df: pd.DataFrame, df_chunk: pd.DataFrame):
+    try:
+        df['is_processed'] = False
+        
+        if 'hit_rate' in df.columns:
+            # --- FIX QUAN TRỌNG NHẤT ---
+            # 1. Đảm bảo hit_rate là dạng số để so sánh
+            df['hit_rate'] = pd.to_numeric(df['hit_rate'], errors='coerce').fillna(0)
+            
+            # 2. Tạo mask so sánh với số 0 (không phải chuỗi "0")
+            # Lọc những dòng hit_rate = 0 VÀ has_answer = True
+            mask = (df['hit_rate'] == 0) & (df['has_answer'] == True)
+            
+            print(f"Số lượng dòng cần tính lại: {mask.sum()}")
+
+            if mask.any():
+                target_cols = ['hit_rate', 'target_chunk_id', 'rank', 'mrr', 'recall_preservation_rate']
+                
+                # Lấy danh sách index của các dòng cần xử lý
+                indices_to_process = df[mask].index
+                total = len(indices_to_process)
+                
+                print(f"Bắt đầu xử lý {total} dòng theo cơ chế vòng lặp...")
+
+                # DUYỆT QUA TỪNG DÒNG (LOOP) THAY VÌ APPLY
+                for idx, i in enumerate(indices_to_process):
                     try:
-                        c_idx = int(row['Chunk_index'])
-                        gt_map[q_text] = c_idx
-                        # Cập nhật max chunk index làm ước lượng cho total corpus size 
-                        # (Nếu không có số chính xác, đây là cách ước lượng tốt nhất từ dữ liệu có sẵn)
-                        if c_idx > total_docs_in_corpus:
-                            total_docs_in_corpus = c_idx
-                    except ValueError:
+                        # Lấy row hiện tại
+                        row = df.loc[i]
+                        
+                        # Gọi hàm tính toán logic
+                        result_series = cal_hit_rate(row, df_chunk)
+                        
+                        # Cập nhật kết quả ngay lập tức vào DataFrame gốc tại index tương ứng
+                        df.loc[i, target_cols] = result_series
+                        df.loc[i, 'is_processed'] = True
+                        
+                        # In tiến độ (Progress logging)
+                        if (idx + 1) % 1 == 0: # In mỗi dòng để dễ theo dõi
+                             print(f"✅ Đã xử lý xong dòng index {i} ({idx + 1}/{total})")
+
+                    except Exception as row_error:
+                        print(f"❌ Lỗi tại dòng index {i}: {row_error}")
+                        # Continue để không dừng chương trình nếu 1 dòng lỗi
                         continue
-            
-            print(f"Đã load Ground Truth: {len(gt_map)} câu hỏi. Total Corpus ước tính: {total_docs_in_corpus}")
-
-        except Exception as e:
-            print(f"Lỗi khi đọc file CSV ground truth: {e}")
-            total_docs_in_corpus = 1000 # Fallback default nếu lỗi
-    else:
-        print(f"Cảnh báo: Không tìm thấy file tại {ground_truth_path}")
-        total_docs_in_corpus = 1000 # Fallback default
-
-    # --- 2. Xử lý Log và Tính Metrics ---
-    raw_data_list = [] 
-    
-    if os.path.exists(folder_path):
-        for filename in os.listdir(folder_path):
-            file_path = os.path.join(folder_path, filename)
-            
-            if os.path.isfile(file_path):
-                file_blocks = parse_log_by_separator(file_path)
                 
-                for item in file_blocks:
-                    raw_text = item.get("raw", "")
-                    
-                    # A. Trích xuất Question
-                    question_content = ""
-                    match_q = re.search(r'Question:\s*(.*)', raw_text)
-                    if match_q:
-                        question_content = match_q.group(1).strip()
-                        item["question"] = question_content
-                    
-                    # B. Xác định pipeline_type
-                    if "[pipeline_6.py:26]" in raw_text:
-                        item["pipeline_type"] = "metadata"
-                    else:
-                        item["pipeline_type"] = "base line"
+        return df
 
-                    # C. Trích xuất danh sách Chunk Index được retrieve (theo thứ tự xuất hiện trong log)
-                    # Pattern tìm "chunk_index": <số>
-                    # Log in ra dạng: "chunk_index": 587
-                    retrieved_chunks = []
-                    matches_chunks = re.findall(r'"chunk_index":\s*(\d+)', raw_text)
-                    if matches_chunks:
-                        # Chuyển sang int
-                        retrieved_chunks = [int(c) for c in matches_chunks]
-                    
-                    item["retrieved_chunks_count"] = len(retrieved_chunks)
-                    item["retrieved_chunks_list"] = str(retrieved_chunks) # Lưu dạng string để xem
+    except KeyboardInterrupt:
+        print("\n⛔ [STOP] User stopped.")
+        return df
+    except Exception as e:
+        print(f"\n❌ [ERROR]: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return df
+# =============================================================================
+# 6. MAIN ORCHESTRATOR (HÀM CHẠY CHÍNH)
+# =============================================================================
 
-                    # D. Tính toán Metrics (Nếu tìm thấy câu hỏi trong Ground Truth)
-                    target_chunk_id = gt_map.get(question_content)
-                    item["target_chunk_id"] = target_chunk_id if target_chunk_id is not None else -1
-
-                    # Khởi tạo giá trị mặc định
-                    rank = 0
-                    mrr = 0.0
-                    is_hit = 0 # Đây chính là Recall@K (với K = số lượng retrieve) cho 1 query
-                    
-                    if target_chunk_id is not None and len(retrieved_chunks) > 0:
-                        if target_chunk_id in retrieved_chunks:
-                            # Rank bắt đầu từ 1
-                            rank = retrieved_chunks.index(target_chunk_id) + 1
-                            mrr = 1.0 / rank
-                            is_hit = 1
-                        else:
-                            rank = 0 # Không tìm thấy
-                            mrr = 0.0
-                            is_hit = 0
-                    
-                    # Gán các metrics vào item
-                    item["rank"] = rank
-                    item["mrr"] = mrr
-                    item["hit_rate"] = is_hit # Hit Rate của query này (1 hoặc 0)
-                    item["recall"] = is_hit   # Recall của query này (1 hoặc 0)
-                    
-                    # Candidate Reduction Ratio (CRR)
-                    # Công thức: 1 - (Số lượng chunk giữ lại / Tổng số chunk)
-                    # CRR càng cao nghĩa là bộ lọc càng hiệu quả (giảm nhiều không gian tìm kiếm)
-                    if total_docs_in_corpus > 0:
-                        crr = 1.0 - (len(retrieved_chunks) / total_docs_in_corpus)
-                    else:
-                        crr = 0.0
-                    item["crr"] = crr
-
-                    # Recall Preservation Rate
-                    # Tỷ lệ recall được bảo toàn sau bước retrieve. 
-                    # Với 1 query và 1 ground truth, nếu tìm thấy (hit) thì là 100%, không thì 0%.
-                    # Nó tương đương với Recall/Hit Rate ở cấp độ row này.
-                    item["recall_preservation_rate"] = 1.0 if is_hit else 0.0
-
-                    # E. Dọn dẹp
-                    if "raw" in item:
-                        del item["raw"]
-                    
-                    # Chỉ thêm item nếu có Question (đã trích xuất được)
-                    if "question" in item: 
-                        raw_data_list.append(item)
-    
-    # --- 3. Chuyển đổi sang DataFrame ---
-    return raw_data_list
-
-# --- CHẠY CHƯƠNG TRÌNH ---
 def main():
-    # --- CẤU HÌNH ĐƯỜNG DẪN ---
-    input_file_path = 'data/vector_store/vectorized_metadata.json' 
-    dim_chunk_file_path = 'dashboard/dim_chunk.csv'
-    log_folder = 'logs'
-    fact_rag_query_file_path = 'dashboard/fact_rag_query.csv'
+    try:
+        # --- CẤU HÌNH ĐƯỜNG DẪN ---
+        PATH_CONFIG = {
+            'vector_meta': 'data/vector_store/vectorized_metadata.json',
+            'dim_chunk': 'dashboard/dim_chunk.csv',
+            'log_folder': 'logs',
+            'fact_query': 'dashboard/fact_rag_query.csv',
+            'ground_truth': 'dashboard/dim_query_ground_truth.csv'
+        }
+
+        # BƯỚC 1: Xử lý dim_chunk (nếu có file nguồn)
+        if os.path.exists(PATH_CONFIG['vector_meta']):
+            raw_json = load_json_file(PATH_CONFIG['vector_meta'])
+            df_chunk = process_dim_chunk(raw_json)
+            if df_chunk is not None:
+                save_dataframe_to_csv(df_chunk, PATH_CONFIG['dim_chunk'])
+        else:
+            print(f"⚠️ Không tìm thấy {PATH_CONFIG['vector_meta']}. Bỏ qua bước tạo dim_chunk.")
+
+        # BƯỚC 2: Xử lý Logs -> Fact Query
+        gt_map, total_docs = load_ground_truth_map(PATH_CONFIG['ground_truth'])
+        raw_logs = process_log_files(PATH_CONFIG['log_folder'], gt_map, total_docs, df_chunk,PATH_CONFIG['fact_query'])
     
-    with open(input_file_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
+        df_result = pd.DataFrame(raw_logs)
+        df_result = clean_processed_logs(df_result)
+        # df_result = calculate_metrics(df_result, df_chunk)
         
-    df_dim_chunk = create_dim_chunk(data)
+        if not df_result.empty:
+            save_dataframe_to_csv(df_result, PATH_CONFIG['fact_query'])
+        else:
+            print("⚠️ Không có dữ liệu log hợp lệ để lưu.")
+            
+    except KeyboardInterrupt:
+        print("\n⛔ [STOP] Dừng chương trình khi đang xử lý DataFrame.")
+        if raw_logs:
+             print("💾 Đang lưu dữ liệu thô...")
+             df_temp = pd.DataFrame(raw_logs)
+             save_dataframe_to_csv(df_temp, PATH_CONFIG['fact_query'])
+             
+    except Exception as e:
+        print(f"❌ [ERROR] Lỗi khi xử lý DataFrame: {e}")
+        if raw_logs:
+             df_temp = pd.DataFrame(raw_logs)
+             save_dataframe_to_csv(df_temp, PATH_CONFIG['fact_query'])
 
-    if df_dim_chunk is not None:
-        # Xuất ra file CSV
-        df_dim_chunk.to_csv(dim_chunk_file_path, index=False, encoding='utf-8')
-    fact_rag_query = processing_log_folder(log_folder)
-
-
-    save_to_csv(fact_rag_query,fact_rag_query_file_path)
-    # Kiểm tra file tồn tại
-    if os.path.exists(fact_rag_query_file_path):
-        chunk_df, fact_df, gt_df = load_data(dim_chunk_file_path, fact_rag_query_file_path, 'dashboard/dim_query_ground_truth.csv')
+    # BƯỚC 3: Render Dashboard (nếu file tồn tại)
+    if os.path.exists(PATH_CONFIG['fact_query']):
+        df_chunk = load_csv_file(PATH_CONFIG['dim_chunk'])
+        df_fact = load_csv_file(PATH_CONFIG['fact_query'])
+        df_gt = load_csv_file(PATH_CONFIG['ground_truth'])
         
-        if fact_df is not None:
-            create_dashboard_report(chunk_df, fact_df, gt_df)
+        # if df_fact is not None and df_chunk is not None:
+        #     create_dashboard_report(df_chunk, df_fact, df_gt)
     else:
-        st.warning(f"Chưa tìm thấy file kết quả: {fact_rag_query_file_path}. Hãy chạy script xử lý log trước.")
+        pass
+        # st.warning(f"Chưa có file kết quả: {PATH_CONFIG['fact_query']}")
 
 if __name__ == "__main__":
     main()

@@ -1,3 +1,4 @@
+from ultils.logger import logger
 from configs import (
     QUESTION_NORMALIZATION_PROMPT,
     NEXT_QUERY_SUGGESTION_PROMPT,

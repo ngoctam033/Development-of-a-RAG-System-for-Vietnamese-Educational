@@ -23,7 +23,7 @@ class GeminiGenerator:
         self.api_key_rotator = GeminiApiKeyRotator()
         self.model = genai.GenerativeModel('gemini-2.0-flash')
 
-    def _generate(self, prompt: str, temperature=0.2, max_output_tokens=1000, top_p=0.95):
+    def _generate(self, prompt: str, temperature=0.2, max_output_tokens=4096, top_p=0.95):
         time.sleep(10)  # tránh lỗi rate limit
         try:
             # Configure Gemini client
@@ -36,6 +36,7 @@ class GeminiGenerator:
                     top_p=top_p,
                 )
             )
+            logger.info(response.text)
             return response.text
         except Exception as e:
             return f"[LỖI] {str(e)}"  # Trả về chuỗi lỗi
@@ -52,6 +53,7 @@ class GeminiGenerator:
                     top_p=top_p,
                 )
             )
+            logger.info(response.text)
             return response.text
         except Exception as e:
             return f"[LỖI] {str(e)}"  # Trả về chuỗi lỗi
@@ -94,7 +96,7 @@ class GeminiGenerator:
                 "context": context_and_sources["context"]
             }
         )
-        response = self._generate1(prompt)
+        response = self._generate(prompt)
         # Trích xuất các trường đặc biệt từ response bằng regex không cần tag đóng
         result = {}
         pattern = r"<<([^>]+)>>\s*([\s\S]*?)(?=(<<[^>]+>>|##STOP_REASONING##|$))"
@@ -196,8 +198,8 @@ class GeminiGenerator:
             result["explanation"] = explain_match.group(1).strip()
         if sources_match:
             # Tách từng dòng nguồn tham khảo
-            # sources = [line.strip('- ').strip() for line in sources_match.group(1).strip().split('\n') if line.strip()]
-            # result["sources"] = sources
+            sources = [line.strip('- ').strip() for line in sources_match.group(1).strip().split('\n') if line.strip()]
+            result["sources"] = sources
             pass
         return response
 
@@ -250,7 +252,7 @@ class LLMlocalGenerator(GeminiGenerator):
                     max_tokens=max_output_tokens,
                     top_p=top_p,
                 )
-                
+                logger.info(response.choices[0].message.content)
                 return response.choices[0].message.content
                 
             except Exception as e:
