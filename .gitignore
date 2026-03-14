@@ -7,3 +7,6 @@ logs/
 .models/
 data/
 data_test.txt
+.agent/
+setup/
+tasks/
