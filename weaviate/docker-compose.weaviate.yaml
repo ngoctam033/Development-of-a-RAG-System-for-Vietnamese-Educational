@@ -1,5 +1,6 @@
 services:
   weaviate:
+    container_name: rag-weaviate
     command:
     - --host
     - 0.0.0.0
