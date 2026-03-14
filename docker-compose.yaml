@@ -1,0 +1,9 @@
+# Khai báo "nhập khẩu" các file con
+include:
+  - airflow/docker-compose.airflow.yaml
+  - minio/docker-compose.minio.yaml
+  - weaviate/docker-compose.weaviate.yaml
+
+networks:
+  rag_network:  
+    driver: bridge
