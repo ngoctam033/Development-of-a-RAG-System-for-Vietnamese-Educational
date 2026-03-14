@@ -1,87 +1,108 @@
-# Kiến trúc Pipeline Xử lý Dữ liệu (Chunking & Indexing)
+# Data Processing Pipeline — Chunking & Indexing Architecture
 
-Tài liệu này mô tả chi tiết luồng xử lý dữ liệu từ các file PDF thô cho đến khi được lưu trữ vào Vector Database để phục vụ hệ thống RAG.
+This document describes the data flow from raw PDF files through to vector storage for the Vietnamese Educational RAG system.
 
-## 1. Tổng quan Pipeline
-
-Hệ thống sử dụng quy trình xử lý 3 giai đoạn chính, tập trung vào việc bảo toàn cấu trúc phân cấp của tài liệu (Hierarchical Structure) để tối ưu hóa quá trình truy vấn ngữ cảnh.
+## 1. Pipeline Overview
 
 ```mermaid
 flowchart TD
-    %% Nodes
-    PDF(["📄 PDF Files (Raw Data)"])
-    MD(["📝 Markdown (Intermediate)"])
-    CHUNKS(["🧩 Chunks + Metadata (Structured Data)"])
-    VEC(["🗄️ Vector Store (FAISS / Pickle)"])
+    PDF([" PDF Files\n(MinIO: raw/)"])
+    MD([" Markdown\n(MinIO: intermediate/)"])
+    JSON([" Flat JSON Chunks\n(MinIO: processed/)"])
+    VEC([" Weaviate\nVector DB"])
 
-    %% Main Flow
-    PDF -->|"Extraction"| MD
-    MD -->|"Semantic Chunking"| CHUNKS
-    CHUNKS -->|"Embedding"| VEC
+    PDF -->|"Stage 1: Extraction\nvision-parse + Gemini API"| MD
+    MD -->|"Stage 2: Processing\nProcessorTasks"| JSON
+    JSON -->|"Stage 3: Indexing\nEmbedding + Weaviate Client"| VEC
 
-    %% Subgraphs
-    subgraph S1 ["Giai đoạn 1: Trích xuất"]
-        E1["Marker / Docling"]
-        E2["Xử lý bảng biểu"]
-        E3["Clean Text"]
+    subgraph S1 ["Stage 1: PDF → Markdown"]
+        E1["vision-parse parser"]
+        E2["Gemini API (OCR/Vision)"]
+        E3["Markdown output"]
     end
 
-    subgraph S2 ["Giai đoạn 2: Phân đoạn"]
-        C1["Parse Hierarchy"]
-        C2["Header Path Tracking"]
-        C3["Table Flattening"]
+    subgraph S2 ["Stage 2: Markdown → JSON"]
+        C1["fetch_markdown()"]
+        C2["parse_markdown_to_dict()"]
+        C3["flatten_hierarchical_dict()"]
+        C4["save_json()"]
+        C1 --> C2 --> C3 --> C4
     end
 
-    subgraph S3 ["Giai đoạn 3: Vector hóa"]
-        I1["Sentence Transformer"]
-        I2["Batch Encoding"]
-        I3["Metadata Mapping"]
+    subgraph S3 ["Stage 3: Indexing"]
+        I1["Load JSON chunks"]
+        I2["Generate embeddings"]
+        I3["Upsert to Weaviate"]
+        I1 --> I2 --> I3
     end
 
-    %% Internal Connections
-    PDF -.-> E1
-    E1 --> E2
-    E2 --> E3
-    E3 -.-> MD
-    
+    PDF -.-> E1 --> E2 --> E3 -.-> MD
     MD -.-> C1
-    C1 --> C2
-    C2 --> C3
-    C3 -.-> CHUNKS
-    
-    CHUNKS -.-> I1
-    I1 --> I2
-    I2 --> I3
+    C4 -.-> JSON
+    JSON -.-> I1
     I3 -.-> VEC
 
-    %% Styling
     style PDF fill:#f9f,stroke:#333,stroke-width:2px
     style MD fill:#bbf,stroke:#333,stroke-width:2px
-    style CHUNKS fill:#bfb,stroke:#333,stroke-width:2px
+    style JSON fill:#bfb,stroke:#333,stroke-width:2px
     style VEC fill:#fbb,stroke:#333,stroke-width:2px
-
-    classDef steps fill:#fff,stroke:#333,stroke-dasharray: 5 5
-    class E1,E2,E3,C1,C2,C3,I1,I2,I3 steps
 ```
 
-## 2. Chi tiết các giai đoạn
+## 2. Stage Details
 
-### Giai đoạn 1: PDF to Markdown
-*   **Công cụ**: Sử dụng **Marker** hoặc **Docling** để trích xuất nội dung từ PDF.
-*   **Mục tiêu**: Chuyển đổi PDF sang Markdown để giữ lại các định dạng cấu trúc như Headers (#, ##, ###), bảng (Tables), và danh sách (Lists).
-*   **Xử lý bảng**: Các bảng được nhận diện và chuyển đổi sang dạng text có cấu trúc để model embedding dễ hiểu hơn.
+### Stage 1: PDF → Markdown (`p01_extractor.py`)
+- **Tool**: `vision-parse` library with **Gemini API** as the vision backend.
+- **Goal**: Convert PDFs to Markdown while preserving structure (Headers, Tables, Lists).
+- **Output**: `.md` files stored in MinIO `intermediate/` via `MinIOStorage`.
 
-### Giai đoạn 2: Markdown to Chunks & Metadata
-*   **Semantic Chunking**: Thay vì cắt theo độ dài cố định, hệ thống cắt dựa trên cấu trúc Header của Markdown.
-*   **Header Path**: Mỗi chunk sẽ mang theo "đường dẫn" của nó (ví dụ: `Ngành CNTT > Chương trình chi tiết > Kiến thức cơ sở`).
-*   **Metadata**: Lưu trữ thông tin về tiêu đề chương, mục, tên file nguồn để phục vụ việc hiển thị nguồn tham khảo sau này.
+### Stage 2: Markdown → Flat JSON (`p02_processor.py` — `ProcessorTasks`)
 
-### Giai đoạn 3: Vector Store & Indexing
-*   **Embedding Model**: Sử dụng mô hình `AITeamVN/Vietnamese_Embedding` (hoặc tương đương) được tối ưu cho tiếng Việt.
-*   **Lưu trữ**:
-    *   `vectorized_data.pkl`: Chứa vector embeddings và metadata đầy đủ.
-    *   `vectorized_metadata.json`: Chứa thông tin văn bản và metadata để tra cứu nhanh.
-*   **Cấu trúc Vector**: Mỗi đoạn văn bản được chuyển thành một vector 768 chiều (tùy model) và lưu vào FAISS Index để tìm kiếm độ tương đồng cosine.
+This is the core processing stage implemented by the `ProcessorTasks` class.
+
+#### 2.1 `fetch_markdown(bucket, filename, category)`
+- Downloads `.md` file from MinIO using `MinIOPathManager` to resolve the canonical path.
+- Returns content as a UTF-8 string.
+
+#### 2.2 `parse_markdown_to_dict(content, file_title)`
+- Scans Markdown line by line, detecting `#` headers to build a **hierarchical tree**.
+- Each node contains: `title`, `content`, `metadata.header_path`, `children[]`.
+- `header_path`: breadcrumb string from the file title to the current node (joined by ` > `).
+  - Example: `"CTDT_CNTT > Chương 1 > Mục tiêu"`
+- Section keys follow the pattern: `section_1`, `section_1_1`, `section_1_1_2`, etc.
+
+#### 2.3 `flatten_hierarchical_dict(nested_dict)`
+- Traverses the nested tree recursively and extracts each section into a **flat list**.
+- Each item: `{ "id", "title", "content", "metadata" }`.
+
+#### 2.4 `save_json(bucket, filename, data, category)`
+- Serializes the flat list to a formatted JSON string (`indent=4`).
+- Uploads to MinIO `processed/` using `MinIOStorage`.
+
+#### Path Management — `MinIOPathManager`
+- Single source of truth for all MinIO directory prefixes.
+- Categories: `raw/`, `intermediate/`, `processed/`.
+- Validates category names before any storage operation.
+
+### Stage 3: Indexing (`p03_indexer.py`)
+- Reads JSON chunks from MinIO `processed/`.
+- **Embedding**: Uses `weaviate-client` compatible embedding models (optimized for Vietnamese).
+- **Storage**: Upserts into **Weaviate** Vector DB for semantic search.
+- Each chunk stored with its `header_path` metadata for source attribution.
 
 ---
-*Tài liệu này được cập nhật tự động bởi hệ thống Agentic RAG.*
+
+## 3. Airflow Orchestration
+
+The Processor stage (Stage 2) is wrapped as an **Apache Airflow DAG**:
+
+```
+fetch_markdown → convert_to_json → save_json
+```
+
+- **Trigger**: Manual only.
+- **Implementation**: `airflow/dags/processor.py` imports `ProcessorTasks`.
+
+See [airflow/README.md](../airflow/README.md) for setup instructions.
+
+---
+*Last updated: 2026-03-14*

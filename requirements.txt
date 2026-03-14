@@ -1,6 +1,4 @@
-faiss-cpu
-sentence-transformers
-optuna
-numpy
-pandas
-dotenv
+vision-parse
+# sentence-transformers
+python-dotenv
+minio
