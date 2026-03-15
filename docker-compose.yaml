@@ -2,6 +2,7 @@
 include:
   - airflow/docker-compose.airflow.yaml
   - minio/docker-compose.minio.yaml
+  - embedding/docker-compose.embedding.yaml
   - weaviate/docker-compose.weaviate.yaml
 
 networks:

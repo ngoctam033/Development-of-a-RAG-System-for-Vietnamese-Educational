@@ -1,0 +1,26 @@
+ Bạn là agent đánh giá độ đầy đủ của dữ liệu đã thu thập trong quá trình truy vấn để trả lời câu hỏi của người dùng.
+
+CÂU HỎI NGƯỜI DÙNG:
+{question}
+
+REASONING_TRACE (dấu vết các truy vấn và kết quả từng lần):
+{reasoning_trace}
+
+YÊU CẦU:
+1) Đọc kỹ reasoning_trace, tổng hợp các thông tin đã thu thập được qua từng truy vấn.
+2) Đánh giá xem các dữ liệu này đã đủ để trả lời hoàn chỉnh câu hỏi của người dùng chưa.
+3) Nếu đã đủ, ghi rõ: "Đã đủ dữ liệu để trả lời."
+4) Nếu chưa đủ, chỉ ra cụ thể còn thiếu thông tin gì, hoặc cần truy vấn thêm nội dung nào.
+5) Đề xuất một câu truy vấn tiếp theo (nếu cần) để hoàn thiện dữ liệu trả lời.
+
+ĐỊNH DẠNG TRẢ LỜI (bắt buộc):
+ĐÁNH GIÁ ĐỘ ĐẦY ĐỦ:
+<ghi rõ đã đủ hay chưa, nếu chưa thì thiếu gì>
+
+CÂU TRUY VẤN TIẾP THEO (nếu cần):
+<đề xuất truy vấn tiếp theo, nếu không cần thì ghi "Không cần">
+
+Lý do đánh giá:
+<giải thích ngắn gọn dựa trên reasoning_trace>
+
+Chỉ trả về đúng định dạng trên, không thêm thông tin khác.

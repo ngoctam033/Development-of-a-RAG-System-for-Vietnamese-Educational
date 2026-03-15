@@ -8,6 +8,7 @@ os.environ["HF_HUB_OFFLINE"] = "1"
 os.environ["TRANSFORMERS_OFFLINE"] = "1"
 
 EMBEDDING_MODEL_NAME = "AITeamVN/Vietnamese_Embedding"
+EMBEDDING_SERVICE_URL = os.getenv("EMBEDDING_SERVICE_URL", "http://rag_embedding:3000")
 CROSS_ENCODER_MODEL_NAME = 'cross-encoder/ms-marco-MiniLM-L-6-v2'
 
 # Path configuration based on PROJECT_STRUCTURE.md
@@ -64,6 +65,29 @@ def load_prompt(file_path):
         with open(full_path, "r", encoding="utf-8") as f:
             return f.read().strip()
     return ""
+
+
+# Vision Parse Configuration
+VISION_PARSE_CONFIG = {
+    "mode": os.getenv("VISION_PARSE_MODE", "gemini"),  # 'gemini' or 'local'
+    "gemini": {
+        "model_name": "gemini-1.5-flash",
+        "temperature": 0.7,
+        "top_p": 0.4,
+        "detailed_extraction": False,
+    },
+    "local": {
+        "model_name": "llama3.2-vision:11b",
+        "temperature": 0.7,
+        "top_p": 0.6,
+        "num_ctx": 4096,
+        "detailed_extraction": True,
+        "ollama_config": {
+            "OLLAMA_NUM_PARALLEL": 8,
+            "OLLAMA_REQUEST_TIMEOUT": 240,
+        }
+    }
+}
 
 
 # Prompt Templates loaded from external files

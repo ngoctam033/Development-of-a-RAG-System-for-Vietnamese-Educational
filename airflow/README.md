@@ -77,6 +77,27 @@ The Dockerfile will install packages directly from `setup/python_packages` — *
 
 ---
 
+## 🤖 Tải Embedding Model (Offline usage)
+
+Hệ thống sử dụng model `AITeamVN/Vietnamese_Embedding` để vector hóa dữ liệu. Để Airflow có thể chạy offline hoàn toàn, bạn cần tải model này về máy host trước bằng script tự động.
+
+### Step 1: Cài đặt thư viện hỗ trợ
+```bash
+pip install huggingface_hub
+```
+
+### Step 2: Chạy script tải model
+Script `get_model.py` tại root của dự án sẽ tự động tải đúng model và lưu vào đúng thư mục (`setup/models/embedding-model`) đã được mount vào container.
+
+```bash
+python get_model.py
+```
+
+> [!TIP]
+> Việc mount thư mục này giúp bạn tránh việc phải tải lại model (~2GB) mỗi lần khởi động container và đảm bảo tính nhất quán giữa file cấu hình `configs.py` và model thực tế.
+
+---
+
 ## 🔑 Environment Variables
 
 All variables are loaded from the root `.env` file (see `.env.example`). Key variables for Airflow:

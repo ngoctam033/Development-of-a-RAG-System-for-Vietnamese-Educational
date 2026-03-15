@@ -25,12 +25,6 @@ graph TB
         WV -->|Semantic Search| GEN[Gemini LLM]
         GEN --> ANS[Answer]
     end
-
-    subgraph "⚙️ Orchestration — Apache Airflow"
-        DAG[processor DAG] -->|fetch| INTER
-        DAG -->|convert| JSON
-        DAG -->|save| PROC
-    end
 ```
 
 ### Technology Stack
