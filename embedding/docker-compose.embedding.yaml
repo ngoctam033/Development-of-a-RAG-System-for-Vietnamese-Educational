@@ -3,10 +3,11 @@ services:
     build:
       context: ..
       dockerfile: embedding/Dockerfile
+    volumes:
+      - ./embedding:/app/embedding
+      - ../setup/models/embedding-model:/opt/models/embedding-model
     container_name: rag_embedding
     ports:
       - "3000:3000"
-    volumes:
-      - ../setup/models/embedding-model:/opt/models/embedding-model
     networks:
       - rag_network

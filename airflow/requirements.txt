@@ -1,4 +1,3 @@
 minio
 weaviate-client
 underthesea
-vision-parse
